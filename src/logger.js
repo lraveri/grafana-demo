@@ -36,7 +36,7 @@ const transport = pino.transport({
 
 const logger = pino(
   {
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL || 'debug',
     base: { service: 'grafana-demo' },
     nestedKey: 'payload',
   },
