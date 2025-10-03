@@ -1,13 +1,10 @@
 const pino = require("pino");
 
+require("dotenv").config();
+
 const logger = pino(
   {
     level: process.env.LOG_LEVEL || "debug",
-    formatters: {
-      level(label) {
-        return { level: label.toUpperCase() };
-      },
-    },
     base: null,
     nestedKey: "payload",
     hooks: {
