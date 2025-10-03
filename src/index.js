@@ -36,7 +36,33 @@ function generateNoiseLogs() {
 
 async function simulateDatabaseQuery(operation, requestId) {
   const startTime = Date.now();
-  const queryTime = randomDelay(5, 150);
+  
+  // Definisce diverse tabelle con probabilità diverse
+  const tableDefinitions = [
+    { name: 'users', weight: 40, fastQuery: true },
+    { name: 'orders', weight: 30, fastQuery: true },
+    { name: 'products', weight: 13, fastQuery: true },
+    { name: 'payments', weight: 10, fastQuery: true },
+    { name: 'user_analytics', weight: 1, fastQuery: false }, // Query lenta, poco probabile
+    { name: 'audit_logs', weight: 1, fastQuery: false }      // Query lenta, poco probabile
+  ];
+  
+  // Seleziona tabella basata sui pesi
+  const random = Math.random() * 100;
+  let cumulativeWeight = 0;
+  let selectedTable = tableDefinitions[0];
+  
+  for (const table of tableDefinitions) {
+    cumulativeWeight += table.weight;
+    if (random <= cumulativeWeight) {
+      selectedTable = table;
+      break;
+    }
+  }
+  
+  // Tempo di query basato sul tipo di tabella
+  const baseTime = selectedTable.fastQuery ? randomDelay(5, 50) : randomDelay(200, 2000);
+  const queryTime = baseTime;
   
   // Simula il tempo di esecuzione
   await new Promise(resolve => setTimeout(resolve, queryTime));
@@ -47,21 +73,53 @@ async function simulateDatabaseQuery(operation, requestId) {
   // Simula occasionali errori DB (5% di probabilità)
   const hasError = Math.random() < 0.05;
   
+  // Genera query specifiche per tabella
+  let query, rowsAffected;
+  
+  switch (selectedTable.name) {
+    case 'users':
+      query = `${operation} * FROM users WHERE status = 'active' AND created_at > NOW() - INTERVAL 30 DAY`;
+      rowsAffected = operation === 'SELECT' ? Math.floor(Math.random() * 500) + 10 : 1;
+      break;
+    case 'orders':
+      query = `${operation} * FROM orders WHERE order_status IN ('pending', 'completed') ORDER BY created_at DESC`;
+      rowsAffected = operation === 'SELECT' ? Math.floor(Math.random() * 1000) + 50 : 1;
+      break;
+    case 'products':
+      query = `${operation} * FROM products WHERE category_id = ${Math.floor(Math.random() * 10) + 1} AND in_stock = true`;
+      rowsAffected = operation === 'SELECT' ? Math.floor(Math.random() * 200) + 20 : 1;
+      break;
+    case 'payments':
+      query = `${operation} * FROM payments WHERE payment_status = 'completed' AND amount > 10.00`;
+      rowsAffected = operation === 'SELECT' ? Math.floor(Math.random() * 300) + 30 : 1;
+      break;
+    case 'user_analytics':
+      query = `${operation} COUNT(*) FROM user_analytics WHERE event_date >= CURDATE() - INTERVAL 7 DAY GROUP BY user_segment`;
+      rowsAffected = operation === 'SELECT' ? Math.floor(Math.random() * 10) + 5 : 1;
+      break;
+    case 'audit_logs':
+      query = `${operation} * FROM audit_logs WHERE action_type = 'user_login' AND created_at >= NOW() - INTERVAL 1 HOUR`;
+      rowsAffected = operation === 'SELECT' ? Math.floor(Math.random() * 50) + 10 : 1;
+      break;
+  }
+  
   if (hasError) {
     const errors = [
       'Connection timeout',
       'Deadlock detected',
       'Table locked',
       'Constraint violation',
-      'Query execution timeout'
+      'Query execution timeout',
+      'Index not found',
+      'Disk space insufficient'
     ];
     const randomError = errors[Math.floor(Math.random() * errors.length)];
     
     logger.error('Database query failed', {
       requestId,
       operation,
-      table: operation === 'SELECT' ? 'users' : 'logs',
-      query: `${operation} * FROM ${operation === 'SELECT' ? 'users' : 'logs'} WHERE active = true`,
+      table: selectedTable.name,
+      query,
       error: randomError,
       queryTime: executionTime
     });
@@ -69,10 +127,10 @@ async function simulateDatabaseQuery(operation, requestId) {
     logger.debug('Database query executed', {
       requestId,
       operation,
-      table: operation === 'SELECT' ? 'users' : 'logs',
-      query: `${operation} * FROM ${operation === 'SELECT' ? 'users' : 'logs'} WHERE active = true`,
+      table: selectedTable.name,
+      query,
       queryTime: executionTime,
-      rowsAffected: operation === 'SELECT' ? Math.floor(Math.random() * 100) : 1
+      rowsAffected
     });
   }
   
@@ -90,16 +148,34 @@ async function simulateHttpRequest(method, endpoint, requestId) {
     endpoint,
     userAgent: 'Mozilla/5.0 (compatible; API-Client/1.0)',
     ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
-    timestamp: new Date().toISOString()
   });
   
   await new Promise(resolve => setTimeout(resolve, randomDelay(5, 20)));
   
-  const dbOperations = Math.floor(Math.random() * 3) + 1;
+  const dbOperations = Math.floor(Math.random() * 4) + 1; // 1-4 operazioni
   for (let i = 0; i < dbOperations; i++) {
-    const operations = ['SELECT', 'INSERT', 'UPDATE'];
-    const operation = operations[Math.floor(Math.random() * operations.length)];
-    await simulateDatabaseQuery(operation, requestId);
+    // Operazioni con probabilità diverse (SELECT più comune, DELETE più raro)
+    const operations = [
+      { op: 'SELECT', weight: 60 },
+      { op: 'INSERT', weight: 20 },
+      { op: 'UPDATE', weight: 15 },
+      { op: 'DELETE', weight: 5 }  // DELETE più raro e potenzialmente più lento
+    ];
+    
+    // Seleziona operazione basata sui pesi
+    const random = Math.random() * 100;
+    let cumulativeWeight = 0;
+    let selectedOperation = operations[0];
+    
+    for (const op of operations) {
+      cumulativeWeight += op.weight;
+      if (random <= cumulativeWeight) {
+        selectedOperation = op;
+        break;
+      }
+    }
+    
+    await simulateDatabaseQuery(selectedOperation.op, requestId);
     
     if (i < dbOperations - 1) {
       await new Promise(resolve => setTimeout(resolve, randomDelay(2, 8)));
@@ -134,8 +210,6 @@ async function simulateHttpRequest(method, endpoint, requestId) {
     endpoint,
     statusCode,
     requestTime: totalTime,
-    responseSize: Math.floor(Math.random() * 2048) + 100,
-    timestamp: new Date().toISOString()
   });
   
   if (statusCode >= 400) {
@@ -175,7 +249,6 @@ async function generateTraffic() {
   logger.info('Starting API traffic simulation', {
     message: 'Traffic generator initialized',
     endpoints: endpoints.length,
-    timestamp: new Date().toISOString()
   });
   
   await new Promise(resolve => setTimeout(resolve, randomDelay(500, 1500)));
@@ -199,7 +272,6 @@ async function main() {
   logger.info('Application started', {
     message: 'Grafana demo application starting',
     version: '1.0.0',
-    timestamp: new Date().toISOString()
   });
   
   await generateTraffic();
@@ -207,7 +279,6 @@ async function main() {
   process.on('SIGINT', () => {
     logger.info('Application shutting down', {
       message: 'Received SIGINT, shutting down gracefully',
-      timestamp: new Date().toISOString()
     });
     process.exit(0);
   });
@@ -218,7 +289,6 @@ main().catch((err) => {
     message: 'Unhandled error in main function',
     error: err.message,
     stack: err.stack,
-    timestamp: new Date().toISOString()
   });
   process.exit(1);
 });
