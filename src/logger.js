@@ -1,50 +1,47 @@
-require('dotenv').config();
-
-const pino = require('pino');
-
-const {
-  LOKI_URL,
-  LOKI_USERNAME,
-  LOKI_PASSWORD,
-  LOKI_STREAM_LABELS,
-} = process.env;
-
-const streamLabels = (() => {
-  try {
-    if (LOKI_STREAM_LABELS) {
-      return JSON.parse(LOKI_STREAM_LABELS);
-    }
-  } catch (error) {
-    // Se le etichette non sono un JSON valido, ignora e usa default
-  }
-  return { app: 'grafana-demo', env: 'local' };
-})();
-
-const transport = pino.transport({
-  target: 'pino-loki',
-  options: {
-    host: LOKI_URL,
-    batching: true,
-    interval: 1000,
-    labels: streamLabels,
-    basicAuth: {
-      username: LOKI_USERNAME,
-      password: LOKI_PASSWORD,
-    },
-  },
-});
+const pino = require("pino");
 
 const logger = pino(
   {
-    level: process.env.LOG_LEVEL || 'debug',
-    base: { service: 'grafana-demo' },
-    nestedKey: 'payload',
+    level: process.env.LOG_LEVEL || "debug",
+    formatters: {
+      level(label) {
+        return { level: label.toUpperCase() };
+      },
+    },
+    base: null,
+    nestedKey: "payload",
+    hooks: {
+      logMethod(inputArgs, method, level) {
+        if (inputArgs.length === 1) {
+          const arg = inputArgs[0];
+          if (typeof arg === "string") return method.call(this, {}, arg);
+          if (typeof arg === "object" && arg !== null)
+            return method.call(this, arg, "");
+        }
+        if (inputArgs.length >= 2) {
+          const arg1 = inputArgs.shift();
+          const arg2 = inputArgs.shift();
+          return method.call(this, arg2, arg1, ...inputArgs);
+        }
+        return method.apply(this, inputArgs);
+      },
+    },
   },
-  transport
+  pino.transport({
+    target: "pino-loki",
+    options: {
+      batching: false,
+      host: process.env.LOKI_HOST || "http://localhost:3100",
+      basicAuth: {
+        username: process.env.LOKI_USERNAME || "admin",
+        password: process.env.LOKI_PASSWORD || "admin",
+      },
+      labels: {
+        source: process.env.LOG_SOURCE || "grafana-demo",
+        environment: process.env.LOG_ENV || "local",
+      },
+    },
+  })
 );
 
-module.exports = {
-  logger,
-};
-
-
+module.exports = { logger };
