@@ -2,39 +2,81 @@ const { logger } = require('./logger');
 const { randomUUID } = require('node:crypto');
 
 function generateShortUUID() {
-  return randomUUID().replace(/-/g, '').substring(0, 8);
+  return randomUUID().replace(/-/g, '').substring(0, 12);
 }
 
 function randomDelay(min = 10, max = 1000) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// Genera log di disturbo casuali
+function generateNoiseLogs() {
+  const noiseLogs = [
+    () => logger.info('Cache hit', { cacheKey: 'user_session_123', hitRate: 0.85 }),
+    () => logger.debug('Memory usage check', { used: '45MB', total: '512MB', percentage: 8.8 }),
+    () => logger.info('Health check passed', { service: 'database', responseTime: randomDelay(1, 10) }),
+    () => logger.debug('Connection pool status', { active: 5, idle: 10, waiting: 0 }),
+    () => logger.info('Scheduled task executed', { task: 'cleanup_temp_files', duration: randomDelay(100, 500) }),
+    () => logger.debug('Rate limit check', { ip: `192.168.1.${Math.floor(Math.random() * 255)}`, allowed: true }),
+    () => logger.info('Session created', { sessionId: generateShortUUID(), userId: Math.floor(Math.random() * 1000) }),
+    () => logger.debug('File uploaded', { filename: `document_${Math.floor(Math.random() * 100)}.pdf`, size: randomDelay(1024, 1048576) }),
+    () => logger.info('Background job started', { jobType: 'email_sender', queueSize: Math.floor(Math.random() * 50) }),
+    () => logger.debug('Configuration reloaded', { configFile: 'app.config', version: '1.2.3' }),
+    () => logger.info('User logged in', { userId: Math.floor(Math.random() * 1000), ip: `10.0.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}` }),
+    () => logger.debug('Metrics collected', { cpu: Math.random() * 100, memory: Math.random() * 100, disk: Math.random() * 100 })
+  ];
+  
+  // Genera 1-3 log di disturbo casuali
+  const numLogs = Math.floor(Math.random() * 3) + 1;
+  for (let i = 0; i < numLogs; i++) {
+    const randomLog = noiseLogs[Math.floor(Math.random() * noiseLogs.length)];
+    setTimeout(() => randomLog(), randomDelay(10, 1000));
+  }
+}
+
 async function simulateDatabaseQuery(operation, requestId) {
   const startTime = Date.now();
   const queryTime = randomDelay(5, 150);
-  logger.debug(`Executing database query`, {
-    requestId,
-    operation,
-    table: operation === 'SELECT' ? 'users' : 'logs',
-    query: `${operation} * FROM ${operation === 'SELECT' ? 'users' : 'logs'} WHERE active = true`
-  });
   
-  await new Promise(resolve => setTimeout(resolve, randomDelay(1, 10)));
-  
+  // Simula il tempo di esecuzione
   await new Promise(resolve => setTimeout(resolve, queryTime));
   
   const endTime = Date.now();
+  const executionTime = endTime - startTime;
   
-  await new Promise(resolve => setTimeout(resolve, randomDelay(1, 5)));
+  // Simula occasionali errori DB (5% di probabilità)
+  const hasError = Math.random() < 0.05;
   
-  logger.info(`Database query completed`, {
-    requestId,
-    operation,
-    queryTime: endTime - startTime,
-    rowsAffected: operation === 'SELECT' ? Math.floor(Math.random() * 100) : 1
-  });
+  if (hasError) {
+    const errors = [
+      'Connection timeout',
+      'Deadlock detected',
+      'Table locked',
+      'Constraint violation',
+      'Query execution timeout'
+    ];
+    const randomError = errors[Math.floor(Math.random() * errors.length)];
+    
+    logger.error('Database query failed', {
+      requestId,
+      operation,
+      table: operation === 'SELECT' ? 'users' : 'logs',
+      query: `${operation} * FROM ${operation === 'SELECT' ? 'users' : 'logs'} WHERE active = true`,
+      error: randomError,
+      queryTime: executionTime
+    });
+  } else {
+    logger.debug('Database query executed', {
+      requestId,
+      operation,
+      table: operation === 'SELECT' ? 'users' : 'logs',
+      query: `${operation} * FROM ${operation === 'SELECT' ? 'users' : 'logs'} WHERE active = true`,
+      queryTime: executionTime,
+      rowsAffected: operation === 'SELECT' ? Math.floor(Math.random() * 100) : 1
+    });
+  }
   
-  return endTime - startTime;
+  return executionTime;
 }
 
 async function simulateHttpRequest(method, endpoint, requestId) {
@@ -42,7 +84,7 @@ async function simulateHttpRequest(method, endpoint, requestId) {
   
   await new Promise(resolve => setTimeout(resolve, randomDelay(1, 15)));
   
-  logger.info(`Incoming ${method} request`, {
+  logger.info('HTTP request received', {
     requestId,
     method,
     endpoint,
@@ -86,7 +128,7 @@ async function simulateHttpRequest(method, endpoint, requestId) {
   
   await new Promise(resolve => setTimeout(resolve, randomDelay(1, 5)));
   
-  logger.info(`Response sent`, {
+  logger.info('HTTP response sent', {
     requestId,
     method,
     endpoint,
@@ -99,7 +141,7 @@ async function simulateHttpRequest(method, endpoint, requestId) {
   if (statusCode >= 400) {
     await new Promise(resolve => setTimeout(resolve, randomDelay(2, 10)));
     
-    logger.error(`Request failed`, {
+    logger.error('HTTP request failed', {
       requestId,
       method,
       endpoint,
@@ -143,6 +185,11 @@ async function generateTraffic() {
     const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
     
     await simulateHttpRequest(endpoint.method, endpoint.path, requestId);
+    
+    // Genera log di disturbo occasionalmente (30% di probabilità)
+    if (Math.random() < 0.3) {
+      generateNoiseLogs();
+    }
     
     await new Promise(resolve => setTimeout(resolve, randomDelay(50, 200)));
   }, randomDelay(100, 2000));
