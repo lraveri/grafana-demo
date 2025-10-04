@@ -250,5 +250,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
+## 📖 **Talk Slides**
+
+The presentation slides for this demo are available in the repository:
+
+- **Slides**: [`slide/grafana-talk.pdf`](slide/grafana-talk.pdf)
+
+These slides accompany the live demonstration and provide additional context about observability best practices, Grafana setup, and Loki query examples.
+
+---
+
 **Speaker**: [Luca Raveri](https://lucaraveri.com)  
 **Talk**: "Mastering Observability with Open Source Tools"
