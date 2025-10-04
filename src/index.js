@@ -137,7 +137,7 @@ async function simulateDatabaseQuery(operation, requestId) {
   return executionTime;
 }
 
-async function simulateHttpRequest(method, endpoint, requestId) {
+async function simulateHttpRequest(method, endpoint, requestId, isTrafficSpike = false) {
   const startTime = Date.now();
   
   await new Promise(resolve => setTimeout(resolve, randomDelay(1, 15)));
@@ -188,17 +188,41 @@ async function simulateHttpRequest(method, endpoint, requestId) {
   const endTime = Date.now();
   const totalTime = endTime - startTime;
   
-  const statusCodes = [200, 201, 400, 401, 404, 500];
-  const weights = [60, 15, 10, 5, 7, 3];
-  const random = Math.random() * 100;
-  let cumulativeWeight = 0;
+  // Simula spike di errori 500
   let statusCode = 200;
+  let isErrorSpike = false;
   
-  for (let i = 0; i < statusCodes.length; i++) {
-    cumulativeWeight += weights[i];
-    if (random <= cumulativeWeight) {
-      statusCode = statusCodes[i];
-      break;
+  // Durante spike di traffico, aumenta la probabilità di errori 500
+  const errorSpikeProbability = isTrafficSpike ? 0.05 : 0.01; // 5% durante traffico, 1% normale
+  const isSpike = Math.random() < errorSpikeProbability;
+  
+  if (isSpike) {
+    // Durante uno spike, 80% di probabilità di errore 500
+    statusCode = Math.random() < 0.8 ? 500 : 200;
+    isErrorSpike = true;
+    
+    logger.error('Server spike detected', {
+      requestId,
+      method,
+      endpoint,
+      spikeType: 'high_error_rate',
+      errorProbability: 0.8,
+      trafficSpike: isTrafficSpike
+    });
+  } else {
+    // Distribuzione normale degli status code
+    const statusCodes = [200, 201, 400, 401, 404, 500];
+    // Durante traffic spike, aumenta leggermente la probabilità di errori
+    const weights = isTrafficSpike ? [60, 12, 10, 5, 8, 5] : [65, 15, 8, 4, 6, 2];
+    const random = Math.random() * 100;
+    let cumulativeWeight = 0;
+    
+    for (let i = 0; i < statusCodes.length; i++) {
+      cumulativeWeight += weights[i];
+      if (random <= cumulativeWeight) {
+        statusCode = statusCodes[i];
+        break;
+      }
     }
   }
   
@@ -253,18 +277,44 @@ async function generateTraffic() {
   
   await new Promise(resolve => setTimeout(resolve, randomDelay(500, 1500)));
   
+  let isTrafficSpike = false;
+  let spikeEndTime = 0;
+  
   setInterval(async () => {
+    // Simula spike di traffico (0.5% di probabilità)
+    const now = Date.now();
+    if (!isTrafficSpike && Math.random() < 0.005) {
+      isTrafficSpike = true;
+      spikeEndTime = now + randomDelay(30000, 120000); // Spike dura 30-120 secondi
+      
+      logger.error('Traffic spike detected', {
+        message: 'High traffic volume detected',
+        spikeDuration: spikeEndTime - now,
+        expectedImpact: 'increased_response_times'
+      });
+    }
+    
+    // Fine dello spike
+    if (isTrafficSpike && now > spikeEndTime) {
+      isTrafficSpike = false;
+      logger.info('Traffic spike ended', {
+        message: 'Traffic volume returned to normal'
+      });
+    }
+    
     const requestId = generateShortUUID();
     const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
     
-    await simulateHttpRequest(endpoint.method, endpoint.path, requestId);
+    await simulateHttpRequest(endpoint.method, endpoint.path, requestId, isTrafficSpike);
     
     // Genera log di disturbo occasionalmente (30% di probabilità)
     if (Math.random() < 0.3) {
       generateNoiseLogs();
     }
     
-    await new Promise(resolve => setTimeout(resolve, randomDelay(50, 200)));
+    // Durante uno spike, intervallo più breve tra le richieste
+    const baseDelay = isTrafficSpike ? randomDelay(20, 100) : randomDelay(50, 200);
+    await new Promise(resolve => setTimeout(resolve, baseDelay));
   }, randomDelay(100, 2000));
 }
 
@@ -277,7 +327,7 @@ async function main() {
   await generateTraffic();
   
   process.on('SIGINT', () => {
-    logger.info('Application shutting down', {
+    logger.error('Application crashed', {
       message: 'Received SIGINT, shutting down gracefully',
     });
     process.exit(0);
