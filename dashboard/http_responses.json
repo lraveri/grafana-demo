@@ -1,0 +1,441 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 0,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {
+          "type": "loki",
+          "uid": "grafanacloud-logs"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "filterable": true,
+              "footer": {
+                "reducers": []
+              },
+              "hideFrom": {
+                "viz": false
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": [
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "payload"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 616
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "level"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 98
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "time"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 227
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "requestId"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 171
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "msg"
+              },
+              "properties": [
+                {
+                  "id": "custom.width",
+                  "value": 216
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "statusCode"
+              },
+              "properties": [
+                {
+                  "id": "mappings",
+                  "value": [
+                    {
+                      "options": {
+                        "200": {
+                          "color": "green",
+                          "index": 0
+                        },
+                        "201": {
+                          "color": "green",
+                          "index": 2
+                        },
+                        "400": {
+                          "color": "blue",
+                          "index": 4
+                        },
+                        "401": {
+                          "color": "blue",
+                          "index": 5
+                        },
+                        "404": {
+                          "color": "blue",
+                          "index": 3
+                        },
+                        "500": {
+                          "color": "#ef1630",
+                          "index": 1
+                        }
+                      },
+                      "type": "value"
+                    }
+                  ]
+                },
+                {
+                  "id": "custom.cellOptions",
+                  "value": {
+                    "type": "color-text"
+                  }
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "payload"
+              },
+              "properties": [
+                {
+                  "id": "custom.inspect",
+                  "value": true
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "msg"
+              },
+              "properties": [
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "title": "message",
+                      "url": "${__url.path}?${__all_variables_except_message}&var-message=${__value.text}"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "matcher": {
+                "id": "byName",
+                "options": "requestId"
+              },
+              "properties": [
+                {
+                  "id": "links",
+                  "value": [
+                    {
+                      "title": "requestId",
+                      "url": "${__url.path}?${__all_variables_except_requestId}&var-requestId=${__value.text}"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "gridPos": {
+          "h": 15,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "cellHeight": "sm",
+          "showHeader": true,
+          "sortBy": [
+            {
+              "desc": false,
+              "displayName": "requestId"
+            }
+          ]
+        },
+        "pluginVersion": "12.2.0-17940193463.patch2",
+        "targets": [
+          {
+            "datasource": {
+              "type": "loki",
+              "uid": "grafanacloud-logs"
+            },
+            "direction": "backward",
+            "editorMode": "code",
+            "expr": "{source=\"grafana-demo\", environment=~\"${environment}\"}\n|~ \"${data}\"\n| json\n| msg = \"HTTP response sent\"\n| payload_requestId =~ \".*${requestId}.*\"",
+            "queryType": "range",
+            "refId": "A"
+          }
+        ],
+        "title": "New panel",
+        "transformations": [
+          {
+            "id": "extractFields",
+            "options": {
+              "delimiter": ",",
+              "source": "Line"
+            }
+          },
+          {
+            "id": "filterFieldsByName",
+            "options": {
+              "include": {
+                "names": [
+                  "level",
+                  "time",
+                  "payload",
+                  "msg"
+                ]
+              }
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "includeByName": {},
+              "indexByName": {
+                "level": 1,
+                "msg": 2,
+                "payload": 3,
+                "time": 0
+              },
+              "renameByName": {}
+            }
+          },
+          {
+            "id": "convertFieldType",
+            "options": {
+              "conversions": [
+                {
+                  "destinationType": "time",
+                  "targetField": "time"
+                }
+              ],
+              "fields": {}
+            }
+          },
+          {
+            "id": "formatTime",
+            "options": {
+              "outputFormat": "yyyy-MM-dd HH:mm:ss.SSS",
+              "timeField": "",
+              "timezone": "Europe/Rome",
+              "useTimezone": true
+            }
+          },
+          {
+            "id": "extractFields",
+            "options": {
+              "delimiter": ",",
+              "source": "payload"
+            }
+          },
+          {
+            "id": "filterFieldsByName",
+            "options": {
+              "include": {
+                "pattern": "^(time|level|msg|payload|requestId)$"
+              }
+            }
+          },
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "level": true,
+                "msg": true,
+                "requestId": true
+              },
+              "includeByName": {},
+              "indexByName": {
+                "level": 1,
+                "msg": 3,
+                "payload": 4,
+                "requestId": 2,
+                "time": 0
+              },
+              "renameByName": {}
+            }
+          },
+          {
+            "id": "extractFields",
+            "options": {
+              "delimiter": ",",
+              "source": "payload"
+            }
+          },
+          {
+            "id": "filterFieldsByName",
+            "options": {
+              "include": {
+                "names": [
+                  "time",
+                  "requestId",
+                  "method",
+                  "endpoint",
+                  "statusCode",
+                  "requestTime"
+                ]
+              }
+            }
+          }
+        ],
+        "type": "table"
+      }
+    ],
+    "preload": false,
+    "schemaVersion": 42,
+    "tags": [],
+    "templating": {
+      "list": [
+        {
+          "allValue": ".*",
+          "allowCustomValue": true,
+          "current": {
+            "text": "production",
+            "value": "production"
+          },
+          "description": "",
+          "includeAll": true,
+          "name": "environment",
+          "options": [
+            {
+              "selected": false,
+              "text": "development",
+              "value": "development"
+            },
+            {
+              "selected": true,
+              "text": "production",
+              "value": "production"
+            }
+          ],
+          "query": "development,production",
+          "type": "custom"
+        },
+        {
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "name": "data",
+          "options": [
+            {
+              "selected": true,
+              "text": "",
+              "value": ""
+            }
+          ],
+          "query": "",
+          "type": "textbox"
+        },
+        {
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "name": "requestId",
+          "options": [
+            {
+              "selected": true,
+              "text": "",
+              "value": ""
+            }
+          ],
+          "query": "",
+          "type": "textbox"
+        }
+      ]
+    },
+    "time": {
+      "from": "2025-10-03T21:00:00.000Z",
+      "to": "2025-10-04T06:59:59.000Z"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "HTTP responses",
+    "uid": "lu86fz6",
+    "version": 8
+  }
