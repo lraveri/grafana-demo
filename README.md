@@ -1,4 +1,4 @@
-# Grafana Loki Demo - Mastering Observability with Open Source Tools
+# Grafana Loki Demo
 
 This repository contains the demo for the talk **"Mastering Observability with Open Source Tools"** by [Luca Raveri](https://lucaraveri.com).
 
