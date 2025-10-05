@@ -99,7 +99,28 @@ $env:NODE_DEBUG = "pino-loki"; npm run test
 NODE_DEBUG=pino-loki npm run test
 ```
 
-### Step 6: Run API Simulation
+### Step 6: Import Dashboards
+
+1. Go to **Grafana** → **Dashboards** → **Import**
+
+2. Import the dashboards from the `dashboard/` folder in this repository:
+
+#### 📋 Available Dashboards
+
+- **API Logs** - Real-time log streaming with filtering capabilities
+- **Fatal Errors** - Time series visualization with automatic alerting
+- **HTTP Responses** - Filterable table of all HTTP responses with performance metrics
+- **Query Executed** - Database query monitoring with execution times
+- **Response Codes** - Time series showing API health and error patterns
+
+### Step 7: Import Alerts
+
+Import alerts from the `alert/` folder:
+
+- **Fatal Errors**: Immediate alert on any fatal error occurrence
+- **500 Error Spikes**: Alert when 500 errors exceed normal thresholds
+
+### Step 8: Run API Simulation
 
 Once everything is configured correctly, start the API simulation:
 
@@ -114,26 +135,7 @@ This will generate realistic API traffic with:
 - Error patterns and spikes
 - Background system logs
 
-### Step 7: Import Dashboards
-
-1. Go to **Grafana** → **Dashboards** → **Import**
-
-2. Import the dashboards from the `dashboard/` folder in this repository:
-
-#### 📋 Available Dashboards
-
-- **API Logs** - Real-time log streaming with filtering capabilities
-- **Fatal Errors** - Time series visualization with automatic alerting
-- **HTTP Responses** - Filterable table of all HTTP responses with performance metrics
-- **Query Executed** - Database query monitoring with execution times
-- **Response Codes** - Time series showing API health and error patterns
-
-### Step 8: Import Alerts
-
-Import alerts from the `alert/` folder:
-
-- **Fatal Errors**: Immediate alert on any fatal error occurrence
-- **500 Error Spikes**: Alert when 500 errors exceed normal thresholds
+**💡 Tip**: Leave the script running for about 10 minutes to generate sufficient data for meaningful analysis and visualization.
 
 ## 📝 License
 
