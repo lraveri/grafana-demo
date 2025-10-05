@@ -1,0 +1,272 @@
+{
+    "apiVersion": 1,
+    "groups": [
+        {
+            "orgId": 1,
+            "name": "My Eval Group",
+            "folder": "API",
+            "interval": "1m",
+            "rules": [
+                {
+                    "uid": "cezyrfr3xna4ge",
+                    "title": "FATAL ERROR",
+                    "condition": "C",
+                    "data": [
+                        {
+                            "refId": "A",
+                            "queryType": "range",
+                            "relativeTimeRange": {
+                                "from": 21600,
+                                "to": 0
+                            },
+                            "datasourceUid": "grafanacloud-logs",
+                            "model": {
+                                "datasource": {
+                                    "type": "loki",
+                                    "uid": "grafanacloud-logs"
+                                },
+                                "direction": "backward",
+                                "editorMode": "code",
+                                "expr": "sum by (message, timestamp)(\n  count_over_time(\n    {source=\"grafana-demo\", environment=\"production\"} \n    | json\n    | msg = \"Application crashed\" [10m]\n  )\n)",
+                                "instant": true,
+                                "intervalMs": 1000,
+                                "maxDataPoints": 43200,
+                                "queryType": "range",
+                                "range": false,
+                                "refId": "A"
+                            }
+                        },
+                        {
+                            "refId": "B",
+                            "relativeTimeRange": {
+                                "from": 0,
+                                "to": 0
+                            },
+                            "datasourceUid": "__expr__",
+                            "model": {
+                                "conditions": [
+                                    {
+                                        "evaluator": {
+                                            "params": [],
+                                            "type": "gt"
+                                        },
+                                        "operator": {
+                                            "type": "and"
+                                        },
+                                        "query": {
+                                            "params": [
+                                                "B"
+                                            ]
+                                        },
+                                        "reducer": {
+                                            "params": [],
+                                            "type": "max"
+                                        },
+                                        "type": "query"
+                                    }
+                                ],
+                                "datasource": {
+                                    "type": "__expr__",
+                                    "uid": "__expr__"
+                                },
+                                "expression": "A",
+                                "intervalMs": 1000,
+                                "maxDataPoints": 43200,
+                                "reducer": "max",
+                                "refId": "B",
+                                "type": "reduce"
+                            }
+                        },
+                        {
+                            "refId": "C",
+                            "relativeTimeRange": {
+                                "from": 0,
+                                "to": 0
+                            },
+                            "datasourceUid": "__expr__",
+                            "model": {
+                                "conditions": [
+                                    {
+                                        "evaluator": {
+                                            "params": [
+                                                1
+                                            ],
+                                            "type": "gt"
+                                        },
+                                        "operator": {
+                                            "type": "and"
+                                        },
+                                        "query": {
+                                            "params": [
+                                                "C"
+                                            ]
+                                        },
+                                        "reducer": {
+                                            "params": [],
+                                            "type": "last"
+                                        },
+                                        "type": "query"
+                                    }
+                                ],
+                                "datasource": {
+                                    "type": "__expr__",
+                                    "uid": "__expr__"
+                                },
+                                "expression": "B",
+                                "intervalMs": 1000,
+                                "maxDataPoints": 43200,
+                                "refId": "C",
+                                "type": "threshold"
+                            }
+                        }
+                    ],
+                    "dashboardUid": "lucjkdp",
+                    "panelId": 1,
+                    "noDataState": "OK",
+                    "execErrState": "OK",
+                    "annotations": {
+                        "__dashboardUid__": "lucjkdp",
+                        "__panelId__": "1",
+                        "summary": "FATAL ERROR occurred in API -\u003e watch logs!"
+                    },
+                    "isPaused": false,
+                    "notification_settings": {
+                        "receiver": "My contact point"
+                    }
+                },
+                {
+                    "uid": "aezyrrude6xa8f",
+                    "title": "Errors spike",
+                    "condition": "E",
+                    "data": [
+                        {
+                            "refId": "C",
+                            "queryType": "range",
+                            "relativeTimeRange": {
+                                "from": 21600,
+                                "to": 0
+                            },
+                            "datasourceUid": "grafanacloud-logs",
+                            "model": {
+                                "datasource": {
+                                    "type": "loki",
+                                    "uid": "grafanacloud-logs"
+                                },
+                                "direction": "backward",
+                                "editorMode": "code",
+                                "expr": "sum by (status)(\n  count_over_time(\n    {source=\"grafana-demo\", environment=~\".*\", level=\"info\"}\n    | json\n    | msg = \"HTTP response sent\"\n    | payload_statusCode = \"500\"\n    | label_format status=\"500\"\n  [10m])\n)",
+                                "instant": true,
+                                "intervalMs": 1000,
+                                "maxDataPoints": 43200,
+                                "queryType": "range",
+                                "range": false,
+                                "refId": "C"
+                            }
+                        },
+                        {
+                            "refId": "D",
+                            "relativeTimeRange": {
+                                "from": 0,
+                                "to": 0
+                            },
+                            "datasourceUid": "__expr__",
+                            "model": {
+                                "conditions": [
+                                    {
+                                        "evaluator": {
+                                            "params": [],
+                                            "type": "gt"
+                                        },
+                                        "operator": {
+                                            "type": "and"
+                                        },
+                                        "query": {
+                                            "params": [
+                                                "D"
+                                            ]
+                                        },
+                                        "reducer": {
+                                            "params": [],
+                                            "type": "last"
+                                        },
+                                        "type": "query"
+                                    }
+                                ],
+                                "datasource": {
+                                    "type": "__expr__",
+                                    "uid": "__expr__"
+                                },
+                                "expression": "C",
+                                "intervalMs": 1000,
+                                "maxDataPoints": 43200,
+                                "reducer": "count",
+                                "refId": "D",
+                                "settings": {
+                                    "mode": ""
+                                },
+                                "type": "reduce"
+                            }
+                        },
+                        {
+                            "refId": "E",
+                            "relativeTimeRange": {
+                                "from": 0,
+                                "to": 0
+                            },
+                            "datasourceUid": "__expr__",
+                            "model": {
+                                "conditions": [
+                                    {
+                                        "evaluator": {
+                                            "params": [
+                                                30
+                                            ],
+                                            "type": "gt"
+                                        },
+                                        "operator": {
+                                            "type": "and"
+                                        },
+                                        "query": {
+                                            "params": [
+                                                "E"
+                                            ]
+                                        },
+                                        "reducer": {
+                                            "params": [],
+                                            "type": "last"
+                                        },
+                                        "type": "query"
+                                    }
+                                ],
+                                "datasource": {
+                                    "type": "__expr__",
+                                    "uid": "__expr__"
+                                },
+                                "expression": "D",
+                                "intervalMs": 1000,
+                                "maxDataPoints": 43200,
+                                "refId": "E",
+                                "type": "threshold"
+                            }
+                        }
+                    ],
+                    "dashboardUid": "lu9vrwx",
+                    "panelId": 1,
+                    "noDataState": "OK",
+                    "execErrState": "Error",
+                    "for": "1m",
+                    "annotations": {
+                        "__dashboardUid__": "lu9vrwx",
+                        "__panelId__": "1",
+                        "summary": "Error threshold exceeded – check logs"
+                    },
+                    "labels": {},
+                    "isPaused": false,
+                    "notification_settings": {
+                        "receiver": "My contact point"
+                    }
+                }
+            ]
+        }
+    ]
+}
