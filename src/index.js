@@ -213,7 +213,7 @@ async function simulateHttpRequest(method, endpoint, requestId, isTrafficSpike =
     // Distribuzione normale degli status code
     const statusCodes = [200, 201, 400, 401, 404, 500];
     // Durante traffic spike, aumenta leggermente la probabilità di errori
-    const weights = isTrafficSpike ? [60, 12, 10, 5, 8, 5] : [65, 15, 8, 4, 6, 2];
+    const weights = isTrafficSpike ? [60, 12, 10, 5, 8, 5] : [65, 15, 4, 4, 6, 6]; // Ridotto 400 da 8% a 4%, 500 a 6%
     const random = Math.random() * 100;
     let cumulativeWeight = 0;
     
@@ -226,28 +226,87 @@ async function simulateHttpRequest(method, endpoint, requestId, isTrafficSpike =
     }
   }
   
+  // Exception handler per TUTTI gli errori 500 (sia spike che normali)
+  if (statusCode === 500) {
+    const exceptions = [
+      'TypeError: Cannot read property of undefined',
+      'ReferenceError: variable is not defined',
+      'SyntaxError: Unexpected token',
+      'RangeError: Maximum call stack exceeded',
+      'EvalError: eval() function is not allowed',
+      'URIError: URI malformed',
+      'TypeError: Cannot read property \'length\' of null',
+      'ReferenceError: Cannot access before initialization',
+      'TypeError: undefined is not a function',
+      'RangeError: Invalid array length',
+      'SyntaxError: Unexpected end of input',
+      'TypeError: Cannot convert undefined to object',
+      'ReferenceError: assignment to undeclared variable',
+      'TypeError: Cannot read property \'map\' of undefined',
+      'Error: Maximum call stack size exceeded'
+    ];
+    
+    const exception = exceptions[Math.floor(Math.random() * exceptions.length)];
+    
+    // Genera file e linea casuali per la stack trace
+    const files = [
+      'src/controllers/userController.js',
+      'src/services/productService.js',
+      'src/middleware/authMiddleware.js',
+      'src/utils/databaseHelper.js',
+      'src/routes/apiRoutes.js',
+      'src/models/User.js',
+      'src/validators/requestValidator.js',
+      'src/config/database.js',
+      'src/helpers/responseHelper.js',
+      'src/middleware/errorHandler.js'
+    ];
+    
+    const fileName = files[Math.floor(Math.random() * files.length)];
+    const lineNumber = Math.floor(Math.random() * 200) + 1;
+    const columnNumber = Math.floor(Math.random() * 50) + 1;
+    
+    logger.error('Exception handler caught error', {
+      requestId,
+      method,
+      endpoint,
+      exception: exception,
+      errorType: 'internal_server_error',
+      stackTrace: `${exception}\n    at ${endpoint} (${fileName}:${lineNumber}:${columnNumber})\n    at handleRequest (src/app.js:45:12)\n    at processRequest (src/server.js:123:8)`,
+    });
+  }
+  
   await new Promise(resolve => setTimeout(resolve, randomDelay(1, 5)));
   
-  logger.info('HTTP response sent', {
-    requestId,
-    method,
-    endpoint,
-    statusCode,
-    requestTime: totalTime,
-  });
-  
+  // Log delle risposte - solo una volta per richiesta
   if (statusCode >= 400) {
-    await new Promise(resolve => setTimeout(resolve, randomDelay(2, 10)));
+    // Per errori, logga "HTTP request failed"
+    const logLevel = statusCode === 400 ? 'info' : 'error';
     
-    logger.error('HTTP request failed', {
+    if (statusCode >= 401 && statusCode < 500) {
+      await new Promise(resolve => setTimeout(resolve, randomDelay(2, 10)));
+    } else if (statusCode === 500) {
+      await new Promise(resolve => setTimeout(resolve, randomDelay(2, 10)));
+    }
+    
+    logger[logLevel]('HTTP request failed', {
       requestId,
       method,
       endpoint,
       statusCode,
-      error: statusCode === 404 ? 'Not Found' : 
+      error: statusCode === 400 ? 'Bad Request' : 
              statusCode === 401 ? 'Unauthorized' :
-             statusCode === 400 ? 'Bad Request' : 'Internal Server Error',
+             statusCode === 404 ? 'Not Found' : 'Internal Server Error',
       requestTime: totalTime
+    });
+  } else {
+    // Per successi, logga "HTTP response sent"
+    logger.info('HTTP response sent', {
+      requestId,
+      method,
+      endpoint,
+      statusCode,
+      requestTime: totalTime,
     });
   }
   
