@@ -7,10 +7,8 @@ In this demo, we'll explore how to create powerful log visualizations using **Lo
 ## 🎯 What You'll Learn
 
 - How to set up log streaming to Grafana Cloud Loki
-- Creating comprehensive dashboards for API monitoring
-- Setting up alerts for error spikes and performance issues
-- Analyzing database performance and query patterns
-- Monitoring traffic patterns and system health
+- Creating comprehensive dashboards on Grafana
+- Setting up alerts for error spikes and fatal errors
 
 ## 🚀 Quick Start
 
@@ -18,12 +16,18 @@ In this demo, we'll explore how to create powerful log visualizations using **Lo
 
 1. Go to [Grafana Cloud](https://grafana.com/auth/sign-in/create-user) and create a free account (no credit card required)
 
-2. Navigate to **My Account** → **Manage your Grafana Cloud stack**
+2. Go back to [Grafana Cloud](https://grafana.com/products/cloud) and Navigate to **My Account** → **Manage your Grafana Cloud stack**
 
 3. Click **Details** → Select **Loki** → Grab the following information:
-   - **URL**: Your Loki endpoint
-   - **Username**: Your Grafana Cloud username
-   - **Token**: Create a new API token with Loki permissions
+   - **URL**: Your Loki endpoint (e.g. https://logs-prod-012.grafana.net)
+   - **User**: Your Grafana Cloud user id (e.g. 1059329)
+   - **Name**: Your Loki datasource name (e.g. grafanacloud-lucaraveri993-logs)
+
+4. Create a new token:
+   - In the same page under the section "Sending Logs to Grafana Cloud using Grafana Alloy"
+   - Click on "Generate new token"
+   - Make sure the token has the scope "logs:write"
+
 
 ### Step 2: Setup Repository
 
@@ -49,9 +53,9 @@ Edit `.env` with your actual values:
 
 ```env
 # Grafana Cloud Loki Configuration
-LOKI_HOST="https://logs-prod-***.grafana.net"
-LOKI_USERNAME="1234567"
-LOKI_PASSWORD="your-api-token"
+LOKI_HOST=https://logs-prod-***.grafana.net
+LOKI_USERNAME=1234567
+LOKI_PASSWORD=your-api-token
 
 # Logging Configuration
 LOG_LEVEL=debug
@@ -72,7 +76,7 @@ npm run test
 
 2. Navigate to **Explore** section
 
-3. Select **Loki** as data source
+3. Select **Loki** as data source (the datasource to be selected has the name from step 3, e.g. grafanacloud-lucaraveri993-logs)
 
 4. Run this query to see test logs:
    ```
@@ -80,6 +84,20 @@ npm run test
    ```
 
 5. Verify you can see the test log entries
+
+#### Troubleshooting
+
+If you don't see logs in Grafana, try running the test script with debug mode:
+
+**Windows:**
+```bash
+$env:NODE_DEBUG = "pino-loki"; npm run test
+```
+
+**Mac/Linux:**
+```bash
+NODE_DEBUG=pino-loki npm run test
+```
 
 ### Step 6: Run API Simulation
 
@@ -93,156 +111,29 @@ npm run start
 This will generate realistic API traffic with:
 - HTTP requests and responses
 - Database queries with varying performance
-- Error spikes and traffic patterns
+- Error patterns and spikes
 - Background system logs
 
 ### Step 7: Import Dashboards
 
 1. Go to **Grafana** → **Dashboards** → **Import**
 
-2. Import the following dashboards from the `dashboard/` folder in this repository:
+2. Import the dashboards from the `dashboard/` folder in this repository:
 
 #### 📋 Available Dashboards
 
-**API Logs** (`api_logs.json`)
-- View all API logs with filtering capabilities
-- Search and filter by endpoint, method, status code, and request ID
-- Perfect for debugging and log analysis
-
-**Fatal Errors** (`fatal_errors.json`)
-- Time series visualization of all fatal errors
-- **Alert configured**: Triggers on every fatal error occurrence
-- Monitor system stability and error patterns
-
-**HTTP Responses** (`http_responses.json`)
-- Filterable table showing all HTTP responses
-- Columns: endpoint, status code, response time, request ID
-- Sort and filter by any column for detailed analysis
-
-**Query Executed** (`query_executed.json`)
-- Filterable table of all database queries executed
-- Shows query details, execution time, and affected rows
-- Monitor database performance and slow queries
-
-**Response Codes** (`response_codes.json`)
-- Time series dashboard showing API response patterns
-- Visual breakdown of status codes over time
-- **Alert configured**: Triggers on 500 error spikes
-- Monitor API health and error trends
-
-## 📊 What the Simulation Generates
-
-### API Traffic
-- **12 different endpoints** (users, orders, products, health checks)
-- **Realistic HTTP methods** (GET, POST, PUT, DELETE)
-- **Status code distribution** (200, 201, 400, 401, 404, 500)
-- **Request timing** with realistic delays
-
-### Database Operations
-- **6 different tables** with varying query complexity
-- **4 operation types** (SELECT, INSERT, UPDATE, DELETE)
-- **Performance variations** (fast queries 5-50ms, slow queries 200-2000ms)
-- **Occasional errors** (5% failure rate)
-
-### Traffic Patterns
-- **Normal traffic** with random intervals
-- **Traffic spikes** (0.5% probability) lasting 30-120 seconds
-- **Error spikes** (1% probability) with 80% error rate
-- **Background noise** (cache hits, health checks, metrics)
-
-## 🎛️ Dashboard Features
-
-Each dashboard is designed for specific monitoring needs:
-
-### 📊 **API Logs Dashboard**
-- **Real-time log streaming** with live updates
-- **Advanced filtering** by multiple criteria
-- **Log level indicators** (info, debug, error)
-- **Request tracing** with unique request IDs
-
-### ⚠️ **Fatal Errors Dashboard**
-- **Real-time error monitoring** with time series
-- **Automatic alerting** on every fatal error
-- **Error categorization** and frequency analysis
-- **Trend analysis** for error patterns
-
-### 📋 **HTTP Responses Dashboard**
-- **Tabular view** of all HTTP responses
-- **Sortable columns** for easy analysis
-- **Response time tracking** and performance metrics
-- **Status code distribution** analysis
-
-### 🗄️ **Database Query Dashboard**
-- **Query performance monitoring** with execution times
-- **Slow query identification** and analysis
-- **Database operation tracking** (SELECT, INSERT, UPDATE, DELETE)
-- **Query failure monitoring** and error tracking
-
-### 📈 **Response Codes Dashboard**
-- **Time series visualization** of HTTP status codes
-- **Error spike detection** with automatic alerts
-- **API health monitoring** over time
-- **Traffic pattern analysis** and anomaly detection
+- **API Logs** - Real-time log streaming with filtering capabilities
+- **Fatal Errors** - Time series visualization with automatic alerting
+- **HTTP Responses** - Filterable table of all HTTP responses with performance metrics
+- **Query Executed** - Database query monitoring with execution times
+- **Response Codes** - Time series showing API health and error patterns
 
 ## 🚨 Alerting
 
-Pre-configured alerts include:
+Import alerts from the `alert/` folder:
 
 - **Fatal Errors**: Immediate alert on any fatal error occurrence
 - **500 Error Spikes**: Alert when 500 errors exceed normal thresholds
-
-## 🛠️ Customization
-
-### Modify Log Patterns
-
-Edit `src/index.js` to:
-- Change endpoint configurations
-- Adjust error probabilities
-- Modify database query patterns
-- Add custom log messages
-
-### Environment Variables
-
-- `LOG_LEVEL`: Set log verbosity (debug, info, warn, error)
-- `LOG_SOURCE`: Change the log source label
-- `LOG_ENV`: Set environment (dev, staging, production)
-
-## 📁 Project Structure
-
-```
-grafana-demo/
-├── src/
-│   ├── index.js          # Main API simulation
-│   ├── logger.js         # Pino logger with Loki transport
-│   └── test.js           # Connection test
-├── dashboard/            # Grafana dashboard JSON
-├── package.json
-├── .env.example          # Environment variables template
-└── README.md
-```
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-1. **No logs appearing in Grafana**:
-   - Check your `.env` file credentials
-   - Verify Loki endpoint URL format
-   - Ensure API token has correct permissions
-
-2. **Connection timeouts**:
-   - Check network connectivity to Grafana Cloud
-   - Verify firewall settings
-
-3. **Dashboard not loading**:
-   - Ensure Loki data source is configured
-   - Check that logs are being generated (`npm run test`)
-
-### Getting Help
-
-- Check the [Grafana Cloud documentation](https://grafana.com/docs/grafana-cloud/)
-- Review [Loki query language](https://grafana.com/docs/loki/latest/query/)
-- Join the [Grafana Community](https://community.grafana.com/)
 
 ## 📝 License
 
