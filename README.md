@@ -49,9 +49,9 @@ Edit `.env` with your actual values:
 
 ```env
 # Grafana Cloud Loki Configuration
-LOKI_HOST=https://your-instance.grafana.net/loki/api/v1/push
-LOKI_USERNAME=your-username
-LOKI_PASSWORD=your-api-token
+LOKI_HOST="https://logs-prod-***.grafana.net"
+LOKI_USERNAME="1234567"
+LOKI_PASSWORD="your-api-token"
 
 # Logging Configuration
 LOG_LEVEL=debug
