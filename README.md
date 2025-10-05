@@ -128,7 +128,7 @@ This will generate realistic API traffic with:
 - **Query Executed** - Database query monitoring with execution times
 - **Response Codes** - Time series showing API health and error patterns
 
-## 🚨 Alerting
+### Step 8: Import Alerts
 
 Import alerts from the `alert/` folder:
 
