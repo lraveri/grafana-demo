@@ -157,12 +157,6 @@ This will generate realistic API traffic with:
 
 **💡 Tip**: Leave the script running for about 10 minutes to generate sufficient data for meaningful analysis and visualization. During this time, you should receive alerts via email if they are correctly configured.
 
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
 ## 📖 **Talk Slides**
 
 The presentation slides for this demo are available in the repository:
@@ -175,3 +169,9 @@ These slides accompany the live demonstration and provide additional context abo
 
 **Speaker**: [Luca Raveri](https://lucaraveri.com)  
 **Talk**: "Mastering Observability with Open Source Tools"
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
