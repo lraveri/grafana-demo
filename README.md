@@ -155,7 +155,7 @@ This will generate realistic API traffic with:
 - Error patterns and spikes
 - Background system logs
 
-**💡 Tip**: Leave the script running for about 10 minutes to generate sufficient data for meaningful analysis and visualization.
+**💡 Tip**: Leave the script running for about 10 minutes to generate sufficient data for meaningful analysis and visualization. During this time, you should receive alerts via email if they are correctly configured.
 
 ## 📝 License
 
