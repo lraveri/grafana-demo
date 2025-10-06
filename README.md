@@ -115,10 +115,30 @@ NODE_DEBUG=pino-loki npm run test
 
 ### Step 7: Import Alerts
 
-Import alerts from the `alert/` folder:
+Before importing alerts, you need to set up the alerting infrastructure:
+
+#### 7.1: Create Evaluation Group
+1. Go to **Grafana** → **Alerting** → **Alert Rules**
+2. Click **"New evaluation group"**
+3. Name it: `My Eval Group`
+4. Set evaluation interval: `1m`
+5. Click **"Save"**
+
+#### 7.2: Create Contact Point
+1. Go to **Grafana** → **Alerting** → **Contact points**
+2. Click **"New contact point"**
+3. Name: `My Contact Point`
+4. Type: **Email**
+5. Add your email address where you want to receive alerts
+6. Click **"Save contact point"**
+
+#### 7.3: Import Alert Rules
+Now import the alert rules from the `alert/` folder:
 
 - **Fatal Errors**: Immediate alert on any fatal error occurrence
 - **500 Error Spikes**: Alert when 500 errors exceed normal thresholds
+
+**Note**: Make sure to assign the imported rules to your evaluation group and contact point.
 
 ### Step 8: Run API Simulation
 
