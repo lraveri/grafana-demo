@@ -1,32 +1,117 @@
 const { logger } = require('./logger');
 const { randomUUID } = require('node:crypto');
 
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+
+/**
+ * Generate a short UUID (12 chars) for request tracking
+ */
+function generateRequestUUID() {
+  return randomUUID().replace(/-/g, '').substring(0, 12);
+}
+
+/**
+ * Generate a short UUID for internal identifiers
+ */
 function generateShortUUID() {
   return randomUUID().replace(/-/g, '').substring(0, 12);
 }
 
+/**
+ * Generate a random delay between min and max milliseconds
+ */
 function randomDelay(min = 10, max = 1000) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-// Genera log di disturbo casuali
+/**
+ * Simulate an async delay
+ */
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ============================================================================
+// NOISE LOGS GENERATOR
+// ============================================================================
+
+/**
+ * Generate realistic noise logs with UUID
+ */
 function generateNoiseLogs() {
+  const requestId = generateRequestUUID();
+  const sessionId = generateShortUUID();
+  const userId = Math.floor(Math.random() * 1000) + 1;
+  
   const noiseLogs = [
-    () => logger.info('Cache hit', { cacheKey: 'user_session_123', hitRate: 0.85 }),
-    () => logger.debug('Memory usage check', { used: '45MB', total: '512MB', percentage: 8.8 }),
-    () => logger.info('Health check passed', { service: 'database', responseTime: randomDelay(1, 10) }),
-    () => logger.debug('Connection pool status', { active: 5, idle: 10, waiting: 0 }),
-    () => logger.info('Scheduled task executed', { task: 'cleanup_temp_files', duration: randomDelay(100, 500) }),
-    () => logger.debug('Rate limit check', { ip: `192.168.1.${Math.floor(Math.random() * 255)}`, allowed: true }),
-    () => logger.info('Session created', { sessionId: generateShortUUID(), userId: Math.floor(Math.random() * 1000) }),
-    () => logger.debug('File uploaded', { filename: `document_${Math.floor(Math.random() * 100)}.pdf`, size: randomDelay(1024, 1048576) }),
-    () => logger.info('Background job started', { jobType: 'email_sender', queueSize: Math.floor(Math.random() * 50) }),
-    () => logger.debug('Configuration reloaded', { configFile: 'app.config', version: '1.2.3' }),
-    () => logger.info('User logged in', { userId: Math.floor(Math.random() * 1000), ip: `10.0.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}` }),
-    () => logger.debug('Metrics collected', { cpu: Math.random() * 100, memory: Math.random() * 100, disk: Math.random() * 100 })
+    () => logger.info('Cache hit', { 
+      requestId, 
+      cacheKey: `user_session_${sessionId}`, 
+      hitRate: 0.85 
+    }),
+    () => logger.debug('Memory usage check', { 
+      requestId, 
+      used: '45MB', 
+      total: '512MB', 
+      percentage: 8.8 
+    }),
+    () => logger.info('Health check passed', { 
+      requestId, 
+      service: 'database', 
+      responseTime: randomDelay(1, 10) 
+    }),
+    () => logger.debug('Connection pool status', { 
+      requestId, 
+      active: 5, 
+      idle: 10, 
+      waiting: 0 
+    }),
+    () => logger.info('Scheduled task executed', { 
+      requestId, 
+      task: 'cleanup_temp_files', 
+      duration: randomDelay(100, 500) 
+    }),
+    () => logger.debug('Rate limit check', { 
+      requestId, 
+      ip: `192.168.1.${Math.floor(Math.random() * 255)}`, 
+      allowed: true 
+    }),
+    () => logger.info('Session created', { 
+      requestId, 
+      sessionId: generateShortUUID(), 
+      userId 
+    }),
+    () => logger.debug('File uploaded', { 
+      requestId, 
+      filename: `document_${Math.floor(Math.random() * 100)}.pdf`, 
+      size: randomDelay(1024, 1048576) 
+    }),
+    () => logger.info('Background job started', { 
+      requestId, 
+      jobType: 'email_sender', 
+      queueSize: Math.floor(Math.random() * 50) 
+    }),
+    () => logger.debug('Configuration reloaded', { 
+      requestId, 
+      configFile: 'app.config', 
+      version: '1.2.3' 
+    }),
+    () => logger.info('User logged in', { 
+      requestId, 
+      userId, 
+      ip: `10.0.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}` 
+    }),
+    () => logger.debug('Metrics collected', { 
+      requestId, 
+      cpu: Math.random() * 100, 
+      memory: Math.random() * 100, 
+      disk: Math.random() * 100 
+    })
   ];
   
-  // Genera 1-3 log di disturbo casuali
+  // Generate 1-3 random noise logs
   const numLogs = Math.floor(Math.random() * 3) + 1;
   for (let i = 0; i < numLogs; i++) {
     const randomLog = noiseLogs[Math.floor(Math.random() * noiseLogs.length)];
@@ -34,20 +119,27 @@ function generateNoiseLogs() {
   }
 }
 
+// ============================================================================
+// DATABASE SIMULATION
+// ============================================================================
+
+/**
+ * Simulate a database query with UUID and appropriate logging
+ */
 async function simulateDatabaseQuery(operation, requestId) {
   const startTime = Date.now();
   
-  // Definisce diverse tabelle con probabilità diverse
+  // Define different tables with different probabilities
   const tableDefinitions = [
     { name: 'users', weight: 40, fastQuery: true },
     { name: 'orders', weight: 30, fastQuery: true },
     { name: 'products', weight: 13, fastQuery: true },
     { name: 'payments', weight: 10, fastQuery: true },
-    { name: 'user_analytics', weight: 1, fastQuery: false }, // Query lenta, poco probabile
-    { name: 'audit_logs', weight: 1, fastQuery: false }      // Query lenta, poco probabile
+    { name: 'user_analytics', weight: 1, fastQuery: false }, // Slow query, unlikely
+    { name: 'audit_logs', weight: 1, fastQuery: false }      // Slow query, unlikely
   ];
   
-  // Seleziona tabella basata sui pesi
+  // Select table based on weights
   const random = Math.random() * 100;
   let cumulativeWeight = 0;
   let selectedTable = tableDefinitions[0];
@@ -60,20 +152,20 @@ async function simulateDatabaseQuery(operation, requestId) {
     }
   }
   
-  // Tempo di query basato sul tipo di tabella
+  // Query time based on table type
   const baseTime = selectedTable.fastQuery ? randomDelay(5, 50) : randomDelay(200, 2000);
   const queryTime = baseTime;
   
-  // Simula il tempo di esecuzione
-  await new Promise(resolve => setTimeout(resolve, queryTime));
+  // Simulate execution time
+  await sleep(queryTime);
   
   const endTime = Date.now();
   const executionTime = endTime - startTime;
   
-  // Simula occasionali errori DB (5% di probabilità)
+  // Simulate occasional DB errors (5% probability)
   const hasError = Math.random() < 0.05;
   
-  // Genera query specifiche per tabella
+  // Generate specific queries for table
   let query, rowsAffected;
   
   switch (selectedTable.name) {
@@ -115,6 +207,7 @@ async function simulateDatabaseQuery(operation, requestId) {
     ];
     const randomError = errors[Math.floor(Math.random() * errors.length)];
     
+    // ERROR level for query errors
     logger.error('Database query failed', {
       requestId,
       operation,
@@ -124,6 +217,7 @@ async function simulateDatabaseQuery(operation, requestId) {
       queryTime: executionTime
     });
   } else {
+    // DEBUG level for normal queries
     logger.debug('Database query executed', {
       requestId,
       operation,
@@ -137,10 +231,70 @@ async function simulateDatabaseQuery(operation, requestId) {
   return executionTime;
 }
 
-async function simulateHttpRequest(method, endpoint, requestId, isTrafficSpike = false) {
+// ============================================================================
+// HTTP REQUEST SIMULATION
+// ============================================================================
+
+/**
+ * Handle errors in exception handler (only for 500 errors)
+ */
+function handleExceptionError(requestId, method, endpoint) {
+  const exceptions = [
+    'TypeError: Cannot read property of undefined',
+    'ReferenceError: variable is not defined',
+    'SyntaxError: Unexpected token',
+    'RangeError: Maximum call stack exceeded',
+    'EvalError: eval() function is not allowed',
+    'URIError: URI malformed',
+    'TypeError: Cannot read property \'length\' of null',
+    'ReferenceError: Cannot access before initialization',
+    'TypeError: undefined is not a function',
+    'RangeError: Invalid array length',
+    'SyntaxError: Unexpected end of input',
+    'TypeError: Cannot convert undefined to object',
+    'ReferenceError: assignment to undeclared variable',
+    'TypeError: Cannot read property \'map\' of undefined',
+    'Error: Maximum call stack size exceeded'
+  ];
+  
+  const exception = exceptions[Math.floor(Math.random() * exceptions.length)];
+  
+  // Generate random file and line for stack trace
+  const files = [
+    'src/controllers/userController.js',
+    'src/services/productService.js',
+    'src/middleware/authMiddleware.js',
+    'src/utils/databaseHelper.js',
+    'src/routes/apiRoutes.js',
+    'src/models/User.js',
+    'src/validators/requestValidator.js',
+    'src/config/database.js',
+    'src/helpers/responseHelper.js',
+    'src/middleware/errorHandler.js'
+  ];
+  
+  const fileName = files[Math.floor(Math.random() * files.length)];
+  const lineNumber = Math.floor(Math.random() * 200) + 1;
+  const columnNumber = Math.floor(Math.random() * 50) + 1;
+  
+  logger.error('Exception handler caught error', {
+    requestId,
+    method,
+    endpoint,
+    exception: exception,
+    errorType: 'internal_server_error',
+    stackTrace: `${exception}\n    at ${endpoint} (${fileName}:${lineNumber}:${columnNumber})\n    at handleRequest (src/app.js:45:12)\n    at processRequest (src/server.js:123:8)`,
+  });
+}
+
+/**
+ * Simulate an HTTP request with UUID and correct error handling
+ */
+async function simulateHttpRequest(method, endpoint) {
+  const requestId = generateRequestUUID();
   const startTime = Date.now();
   
-  await new Promise(resolve => setTimeout(resolve, randomDelay(1, 15)));
+  await sleep(randomDelay(1, 15));
   
   logger.info('HTTP request received', {
     requestId,
@@ -150,19 +304,19 @@ async function simulateHttpRequest(method, endpoint, requestId, isTrafficSpike =
     ip: `192.168.1.${Math.floor(Math.random() * 255)}`,
   });
   
-  await new Promise(resolve => setTimeout(resolve, randomDelay(5, 20)));
+  await sleep(randomDelay(5, 20));
   
-  const dbOperations = Math.floor(Math.random() * 4) + 1; // 1-4 operazioni
+  const dbOperations = Math.floor(Math.random() * 4) + 1; // 1-4 operations
   for (let i = 0; i < dbOperations; i++) {
-    // Operazioni con probabilità diverse (SELECT più comune, DELETE più raro)
+    // Operations with different probabilities (SELECT more common, DELETE rarer)
     const operations = [
       { op: 'SELECT', weight: 60 },
       { op: 'INSERT', weight: 20 },
       { op: 'UPDATE', weight: 15 },
-      { op: 'DELETE', weight: 5 }  // DELETE più raro e potenzialmente più lento
+      { op: 'DELETE', weight: 5 }  // DELETE rarer and potentially slower
     ];
     
-    // Seleziona operazione basata sui pesi
+    // Select operation based on weights
     const random = Math.random() * 100;
     let cumulativeWeight = 0;
     let selectedOperation = operations[0];
@@ -178,129 +332,62 @@ async function simulateHttpRequest(method, endpoint, requestId, isTrafficSpike =
     await simulateDatabaseQuery(selectedOperation.op, requestId);
     
     if (i < dbOperations - 1) {
-      await new Promise(resolve => setTimeout(resolve, randomDelay(2, 8)));
+      await sleep(randomDelay(2, 8));
     }
   }
   
   const processingTime = randomDelay(50, 300);
-  await new Promise(resolve => setTimeout(resolve, processingTime));
+  await sleep(processingTime);
   
   const endTime = Date.now();
   const totalTime = endTime - startTime;
   
-  // Simula spike di errori 500
+  // Normal status code distribution
+  const statusCodes = [200, 201, 400, 401, 404, 500];
+  const weights = [65, 15, 4, 4, 6, 6]; // 6% probability for 500 errors
+  const random = Math.random() * 100;
+  let cumulativeWeight = 0;
   let statusCode = 200;
-  let isErrorSpike = false;
   
-  // Durante spike di traffico, aumenta la probabilità di errori 500
-  const errorSpikeProbability = isTrafficSpike ? 0.05 : 0.01; // 5% durante traffico, 1% normale
-  const isSpike = Math.random() < errorSpikeProbability;
-  
-  if (isSpike) {
-    // Durante uno spike, 80% di probabilità di errore 500
-    statusCode = Math.random() < 0.8 ? 500 : 200;
-    isErrorSpike = true;
-    
-    logger.error('Server spike detected', {
-      requestId,
-      method,
-      endpoint,
-      spikeType: 'high_error_rate',
-      errorProbability: 0.8,
-      trafficSpike: isTrafficSpike
-    });
-  } else {
-    // Distribuzione normale degli status code
-    const statusCodes = [200, 201, 400, 401, 404, 500];
-    // Durante traffic spike, aumenta leggermente la probabilità di errori
-    const weights = isTrafficSpike ? [60, 12, 10, 5, 8, 5] : [65, 15, 4, 4, 6, 6]; // Ridotto 400 da 8% a 4%, 500 a 6%
-    const random = Math.random() * 100;
-    let cumulativeWeight = 0;
-    
-    for (let i = 0; i < statusCodes.length; i++) {
-      cumulativeWeight += weights[i];
-      if (random <= cumulativeWeight) {
-        statusCode = statusCodes[i];
-        break;
-      }
+  for (let i = 0; i < statusCodes.length; i++) {
+    cumulativeWeight += weights[i];
+    if (random <= cumulativeWeight) {
+      statusCode = statusCodes[i];
+      break;
     }
   }
   
-  // Exception handler per TUTTI gli errori 500 (sia spike che normali)
+  // FUNDAMENTAL RULE: If there's a 500 error, there MUST be an exception handler
   if (statusCode === 500) {
-    const exceptions = [
-      'TypeError: Cannot read property of undefined',
-      'ReferenceError: variable is not defined',
-      'SyntaxError: Unexpected token',
-      'RangeError: Maximum call stack exceeded',
-      'EvalError: eval() function is not allowed',
-      'URIError: URI malformed',
-      'TypeError: Cannot read property \'length\' of null',
-      'ReferenceError: Cannot access before initialization',
-      'TypeError: undefined is not a function',
-      'RangeError: Invalid array length',
-      'SyntaxError: Unexpected end of input',
-      'TypeError: Cannot convert undefined to object',
-      'ReferenceError: assignment to undeclared variable',
-      'TypeError: Cannot read property \'map\' of undefined',
-      'Error: Maximum call stack size exceeded'
-    ];
-    
-    const exception = exceptions[Math.floor(Math.random() * exceptions.length)];
-    
-    // Genera file e linea casuali per la stack trace
-    const files = [
-      'src/controllers/userController.js',
-      'src/services/productService.js',
-      'src/middleware/authMiddleware.js',
-      'src/utils/databaseHelper.js',
-      'src/routes/apiRoutes.js',
-      'src/models/User.js',
-      'src/validators/requestValidator.js',
-      'src/config/database.js',
-      'src/helpers/responseHelper.js',
-      'src/middleware/errorHandler.js'
-    ];
-    
-    const fileName = files[Math.floor(Math.random() * files.length)];
-    const lineNumber = Math.floor(Math.random() * 200) + 1;
-    const columnNumber = Math.floor(Math.random() * 50) + 1;
-    
-    logger.error('Exception handler caught error', {
-      requestId,
-      method,
-      endpoint,
-      exception: exception,
-      errorType: 'internal_server_error',
-      stackTrace: `${exception}\n    at ${endpoint} (${fileName}:${lineNumber}:${columnNumber})\n    at handleRequest (src/app.js:45:12)\n    at processRequest (src/server.js:123:8)`,
-    });
+    handleExceptionError(requestId, method, endpoint);
   }
   
-  await new Promise(resolve => setTimeout(resolve, randomDelay(1, 5)));
+  await sleep(randomDelay(1, 5));
   
-  // Log delle risposte - solo una volta per richiesta
-  if (statusCode >= 400) {
-    // Per errori, logga "HTTP request failed"
-    const logLevel = statusCode === 400 ? 'info' : 'error';
-    
-    if (statusCode >= 401 && statusCode < 500) {
-      await new Promise(resolve => setTimeout(resolve, randomDelay(2, 10)));
-    } else if (statusCode === 500) {
-      await new Promise(resolve => setTimeout(resolve, randomDelay(2, 10)));
-    }
-    
-    logger[logLevel]('HTTP request failed', {
+  // Response logging - correct status code handling
+  if (statusCode >= 400 && statusCode < 500) {
+    // All 4xx errors treated as 200 but with different status
+    logger.info('HTTP response sent', {
       requestId,
       method,
       endpoint,
       statusCode,
-      error: statusCode === 400 ? 'Bad Request' : 
-             statusCode === 401 ? 'Unauthorized' :
-             statusCode === 404 ? 'Not Found' : 'Internal Server Error',
+      requestTime: totalTime,
+    });
+  } else if (statusCode >= 500) {
+    // For 5xx errors, log as error
+    await sleep(randomDelay(2, 10));
+    
+    logger.error('HTTP request failed', {
+      requestId,
+      method,
+      endpoint,
+      statusCode,
+      error: 'Internal Server Error',
       requestTime: totalTime
     });
   } else {
-    // Per successi, logga "HTTP response sent"
+    // For successes (200, 201), log "HTTP response sent"
     logger.info('HTTP response sent', {
       requestId,
       method,
@@ -313,6 +400,13 @@ async function simulateHttpRequest(method, endpoint, requestId, isTrafficSpike =
   return totalTime;
 }
 
+// ============================================================================
+// TRAFFIC GENERATION
+// ============================================================================
+
+/**
+ * Define available API endpoints
+ */
 const endpoints = [
   { method: 'GET', path: '/api/users' },
   { method: 'GET', path: '/api/users/123' },
@@ -328,73 +422,68 @@ const endpoints = [
   { method: 'GET', path: '/api/metrics' }
 ];
 
+/**
+ * Generate continuous API traffic
+ */
 async function generateTraffic() {
+  const trafficId = generateRequestUUID();
+  
   logger.info('Starting API traffic simulation', {
+    requestId: trafficId,
     message: 'Traffic generator initialized',
     endpoints: endpoints.length,
   });
   
-  await new Promise(resolve => setTimeout(resolve, randomDelay(500, 1500)));
-  
-  let isTrafficSpike = false;
-  let spikeEndTime = 0;
+  await sleep(randomDelay(500, 1500));
   
   setInterval(async () => {
-    // Simula spike di traffico (0.5% di probabilità)
-    const now = Date.now();
-    if (!isTrafficSpike && Math.random() < 0.005) {
-      isTrafficSpike = true;
-      spikeEndTime = now + randomDelay(30000, 120000); // Spike dura 30-120 secondi
-      
-      logger.error('Traffic spike detected', {
-        message: 'High traffic volume detected',
-        spikeDuration: spikeEndTime - now,
-        expectedImpact: 'increased_response_times'
-      });
-    }
-    
-    // Fine dello spike
-    if (isTrafficSpike && now > spikeEndTime) {
-      isTrafficSpike = false;
-      logger.info('Traffic spike ended', {
-        message: 'Traffic volume returned to normal'
-      });
-    }
-    
-    const requestId = generateShortUUID();
     const endpoint = endpoints[Math.floor(Math.random() * endpoints.length)];
     
-    await simulateHttpRequest(endpoint.method, endpoint.path, requestId, isTrafficSpike);
+    await simulateHttpRequest(endpoint.method, endpoint.path);
     
-    // Genera log di disturbo occasionalmente (30% di probabilità)
+    // Generate noise logs occasionally (30% probability)
     if (Math.random() < 0.3) {
       generateNoiseLogs();
     }
     
-    // Durante uno spike, intervallo più breve tra le richieste
-    const baseDelay = isTrafficSpike ? randomDelay(20, 100) : randomDelay(50, 200);
-    await new Promise(resolve => setTimeout(resolve, baseDelay));
+    // Interval between requests
+    await sleep(randomDelay(50, 200));
   }, randomDelay(100, 2000));
 }
 
+// ============================================================================
+// MAIN APPLICATION
+// ============================================================================
+
+/**
+ * Main application function
+ */
 async function main() {
+  const appId = generateRequestUUID();
+  
   logger.info('Application started', {
+    requestId: appId,
     message: 'Grafana demo application starting',
-    version: '1.0.0',
+    version: '2.0.0',
   });
   
   await generateTraffic();
   
   process.on('SIGINT', () => {
     logger.error('Application crashed', {
+      requestId: generateRequestUUID(),
       message: 'Shutting down the application',
     });
     process.exit(0);
   });
 }
 
+/**
+ * Handle unhandled errors
+ */
 main().catch((err) => {
   logger.error('Application error', {
+    requestId: generateRequestUUID(),
     message: 'Unhandled error in main function',
     error: err.message,
     stack: err.stack,
