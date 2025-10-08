@@ -113,34 +113,7 @@ NODE_DEBUG=pino-loki npm run test
 - **Query Executed** - Database query monitoring with execution times
 - **Response Codes** - Time series showing API health and error patterns
 
-### Step 7: Import Alerts
-
-Before importing alerts, you need to set up the alerting infrastructure:
-
-#### 7.1: Create Evaluation Group
-1. Go to **Grafana** → **Alerting** → **Alert Rules**
-2. Click **"New evaluation group"**
-3. Name it: `My Eval Group`
-4. Set evaluation interval: `1m`
-5. Click **"Save"**
-
-#### 7.2: Create Contact Point
-1. Go to **Grafana** → **Alerting** → **Contact points**
-2. Click **"New contact point"**
-3. Name: `My Contact Point`
-4. Type: **Email**
-5. Add your email address where you want to receive alerts
-6. Click **"Save contact point"**
-
-#### 7.3: Import Alert Rules
-Now import the alert rules from the `alert/` folder:
-
-- **Fatal Errors**: Immediate alert on any fatal error occurrence
-- **500 Error Spikes**: Alert when 500 errors exceed normal thresholds
-
-**Note**: Make sure to assign the imported rules to your evaluation group and contact point.
-
-### Step 8: Run API Simulation
+### Step 7: Run API Simulation
 
 Once everything is configured correctly, start the API simulation:
 
@@ -156,6 +129,38 @@ This will generate realistic API traffic with:
 - Background system logs
 
 **💡 Tip**: Leave the script running for about 10 minutes to generate sufficient data for meaningful analysis and visualization. During this time, you should receive alerts via email if they are correctly configured.
+
+### Step 8: Create Alerts (Exercise)
+
+As an exercise, create the following alerting infrastructure and rules:
+
+#### 8.1: Create Evaluation Group
+1. Go to **Grafana** → **Alerting** → **Alert Rules**
+2. Click **"New evaluation group"**
+3. Name it: `My Eval Group`
+4. Set evaluation interval: `1m`
+5. Click **"Save"**
+
+#### 8.2: Create Contact Point
+1. Go to **Grafana** → **Alerting** → **Contact points**
+2. Click **"New contact point"**
+3. Name: `My Contact Point`
+4. Type: **Email**
+5. Add your email address where you want to receive alerts
+6. Click **"Save contact point"**
+
+#### 8.3: Create Alert Rules (Exercise)
+Create the following alert rules manually:
+
+- **Fatal Errors**: Alert when "Application crashed" messages appear
+  - Query: `{source="grafana-demo", environment="production"} | json | msg = "Application crashed"`
+  - Condition: Alert immediately when any logs match this pattern
+
+- **500 Error Spikes**: Alert when 500 errors exceed 30 occurrences in 10 minutes
+  - Query: `{source="grafana-demo"} | json | msg = "HTTP response sent" | payload_statusCode = "500"`
+  - Condition: Alert if more than 30 errors in 10 minutes
+
+**Note**: Assign these rules to your evaluation group and contact point.
 
 ## 📖 **Talk Slides**
 
