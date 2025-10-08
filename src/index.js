@@ -387,7 +387,7 @@ async function main() {
   
   process.on('SIGINT', () => {
     logger.error('Application crashed', {
-      message: 'Received SIGINT, shutting down gracefully',
+      message: 'Shutting down the application',
     });
     process.exit(0);
   });
