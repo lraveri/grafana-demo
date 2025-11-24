@@ -1,0 +1,108 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grafana-demo-app
+    volumes:
+      - app-logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - LOG_LEVEL=debug
+    restart: unless-stopped
+    networks:
+      - logging
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: grafana-alloy
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy
+      - app-logs:/var/log/app:ro
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+    ports:
+      - "12345:12345"
+    depends_on:
+      - loki
+      - app
+    restart: unless-stopped
+    networks:
+      - logging
+
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: grafana-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+    restart: unless-stopped
+    networks:
+      - logging
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - loki
+    restart: unless-stopped
+    networks:
+      - logging
+
+  dashboard-importer:
+    build:
+      context: .
+      dockerfile: Dockerfile.importer
+    container_name: dashboard-importer
+    volumes:
+      - ./dashboard:/dashboards:ro
+    depends_on:
+      - grafana
+    restart: "no"
+    networks:
+      - logging
+
+  # Alert importer - runs once to import alert rules
+  alert-importer:
+    build:
+      context: .
+      dockerfile: Dockerfile.alert-importer
+    container_name: alert-importer
+    environment:
+      - ALERT_EMAIL=${ALERT_EMAIL:-demo@example.com}
+    volumes:
+      - ./alert:/alerts:ro
+    depends_on:
+      - grafana
+    restart: "no"
+    networks:
+      - logging
+
+volumes:
+  app-logs:
+    driver: local
+  loki-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  logging:
+    driver: bridge
+

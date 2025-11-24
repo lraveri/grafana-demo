@@ -1,12 +1,25 @@
 const pino = require("pino");
+const fs = require("fs");
+const path = require("path");
 
 require("dotenv").config();
+
+// Create logs directory if it doesn't exist
+const logsDir = path.join(__dirname, "..", "logs");
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
 
 const logger = pino(
   {
     level: process.env.LOG_LEVEL || "debug",
     base: null,
     nestedKey: "payload",
+    formatters: {
+      level(label, number) {
+        return { level: label };
+      },
+    },
     hooks: {
       logMethod(inputArgs, method, level) {
         if (inputArgs.length === 1) {
@@ -24,20 +37,10 @@ const logger = pino(
       },
     },
   },
-  pino.transport({
-    target: "pino-loki",
-    options: {
-      batching: false,
-      host: process.env.LOKI_HOST || "http://localhost:3100",
-      basicAuth: {
-        username: process.env.LOKI_USERNAME || "admin",
-        password: process.env.LOKI_PASSWORD || "admin",
-      },
-      labels: {
-        source: process.env.LOG_SOURCE || "grafana-demo",
-        environment: process.env.LOG_ENV || "local",
-      },
-    },
+  pino.destination({
+    dest: path.join(logsDir, "app.log"),
+    sync: false,
+    mkdir: true
   })
 );
 

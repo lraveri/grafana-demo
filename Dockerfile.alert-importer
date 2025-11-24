@@ -1,0 +1,11 @@
+FROM alpine:latest
+
+# Install curl and jq
+RUN apk add --no-cache curl jq bash
+
+# Copy alert import script
+COPY import-alerts.sh /import-alerts.sh
+RUN chmod +x /import-alerts.sh
+
+CMD ["/import-alerts.sh"]
+
