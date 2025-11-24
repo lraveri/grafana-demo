@@ -232,6 +232,130 @@ async function simulateDatabaseQuery(operation, requestId) {
 }
 
 // ============================================================================
+// EMAIL SERVICE SIMULATION
+// ============================================================================
+
+/**
+ * Simulate email service with event-driven logging
+ */
+async function simulateEmailService() {
+  const requestId = generateRequestUUID();
+  const startTime = Date.now();
+  
+  // Email templates with realistic names
+  const templates = [
+    'welcome_email',
+    'password_reset',
+    'order_confirmation',
+    'shipping_notification',
+    'invoice',
+    'newsletter',
+    'account_verification',
+    'payment_receipt',
+    'subscription_renewal',
+    'promotional_offer'
+  ];
+  
+  const templateName = templates[Math.floor(Math.random() * templates.length)];
+  
+  // Generate realistic email addresses
+  const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'company.com', 'example.com'];
+  const names = ['john.doe', 'jane.smith', 'user', 'customer', 'test.user', 'admin'];
+  const recipientEmail = `${names[Math.floor(Math.random() * names.length)]}${Math.floor(Math.random() * 999)}@${domains[Math.floor(Math.random() * domains.length)]}`;
+  
+  // Initial event received log
+  logger.info('Event received', {
+    requestId,
+    context: 'EmailService',
+    eventType: 'send_email',
+    templateName,
+    recipientEmail
+  });
+  
+  await sleep(randomDelay(10, 50));
+  
+  // Occasional noise logs (40% probability)
+  if (Math.random() < 0.4) {
+    logger.debug('Template loaded from cache', {
+      requestId,
+      context: 'EmailService',
+      templateName,
+      cacheHit: true
+    });
+  }
+  
+  await sleep(randomDelay(20, 100));
+  
+  // Simulate template rendering
+  if (Math.random() < 0.3) {
+    logger.debug('Template rendering started', {
+      requestId,
+      context: 'EmailService',
+      templateName,
+      variables: Math.floor(Math.random() * 10) + 1
+    });
+    
+    await sleep(randomDelay(10, 40));
+  }
+  
+  // Simulate SMTP connection (occasional log)
+  if (Math.random() < 0.25) {
+    logger.debug('SMTP connection established', {
+      requestId,
+      context: 'EmailService',
+      smtpServer: 'smtp.mailprovider.com',
+      port: 587
+    });
+  }
+  
+  await sleep(randomDelay(50, 200));
+  
+  const endTime = Date.now();
+  const totalTime = endTime - startTime;
+  
+  // Success vs Error (10% error rate)
+  const hasError = Math.random() < 0.10;
+  
+  if (hasError) {
+    const errors = [
+      'SMTP connection timeout',
+      'Invalid recipient address',
+      'Template rendering failed',
+      'Rate limit exceeded',
+      'Authentication failed',
+      'Recipient mailbox full',
+      'Message too large',
+      'Blacklisted sender'
+    ];
+    
+    const errorMessage = errors[Math.floor(Math.random() * errors.length)];
+    
+    logger.error('Email errored', {
+      requestId,
+      context: 'EmailService',
+      templateName,
+      recipientEmail,
+      error: errorMessage,
+      processingTime: totalTime,
+      retryable: Math.random() < 0.7
+    });
+  } else {
+    // Successful email sent
+    logger.info('Email sent', {
+      requestId,
+      context: 'EmailService',
+      templateName,
+      recipientEmail,
+      messageId: generateShortUUID(),
+      processingTime: totalTime,
+      smtpResponse: '250 Message accepted'
+    });
+  }
+  
+  return totalTime;
+}
+
+// ============================================================================
 // HTTP REQUEST SIMULATION
 // ============================================================================
 
@@ -444,6 +568,11 @@ async function generateTraffic() {
     // Generate noise logs occasionally (30% probability)
     if (Math.random() < 0.3) {
       generateNoiseLogs();
+    }
+    
+    // Simulate email service occasionally (15% probability)
+    if (Math.random() < 0.15) {
+      await simulateEmailService();
     }
     
     // Interval between requests
