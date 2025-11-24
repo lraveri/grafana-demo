@@ -1,0 +1,52 @@
+// Alloy configuration to read logs from file and send to Loki
+
+// Read logs from the application log file
+loki.source.file "app_logs" {
+  targets = [
+    {
+      __path__ = "/var/log/app/app.log",
+      job      = "grafana-demo",
+      source   = "grafana-demo",
+      environment = "production",
+    },
+  ]
+  
+  forward_to = [loki.process.json_parser.receiver]
+}
+
+// Process JSON logs
+loki.process "json_parser" {
+  // Parse JSON log lines
+  stage.json {
+    expressions = {
+      level = "level",
+      time  = "time",
+      msg   = "msg",
+    }
+  }
+  
+  // Extract timestamp
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339"
+  }
+  
+  // Add labels based on log level
+  stage.labels {
+    values = {
+      level = "level",
+    }
+  }
+
+  forward_to = [loki.write.loki_endpoint.receiver]
+}
+
+// Write logs to Loki
+loki.write "loki_endpoint" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+    
+    // No authentication needed for local Loki
+  }
+}
+

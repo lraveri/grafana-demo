@@ -19,11 +19,11 @@
                                 "from": 21600,
                                 "to": 0
                             },
-                            "datasourceUid": "grafanacloud-logs",
+                            "datasourceUid": "Loki",
                             "model": {
                                 "datasource": {
                                     "type": "loki",
-                                    "uid": "grafanacloud-logs"
+                                    "uid": "Loki"
                                 },
                                 "direction": "backward",
                                 "editorMode": "code",
@@ -147,11 +147,11 @@
                                 "from": 21600,
                                 "to": 0
                             },
-                            "datasourceUid": "grafanacloud-logs",
+                            "datasourceUid": "Loki",
                             "model": {
                                 "datasource": {
                                     "type": "loki",
-                                    "uid": "grafanacloud-logs"
+                                    "uid": "Loki"
                                 },
                                 "direction": "backward",
                                 "editorMode": "code",

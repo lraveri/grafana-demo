@@ -18,7 +18,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 0,
+  "id": null,
   "links": [],
   "panels": [
     {
@@ -36,7 +36,6 @@
             "cellOptions": {
               "type": "auto"
             },
-            "filterable": true,
             "footer": {
               "reducers": []
             },
@@ -69,7 +68,7 @@
             "properties": [
               {
                 "id": "custom.width",
-                "value": 616
+                "value": 436
               }
             ]
           },
@@ -124,7 +123,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "statusCode"
+              "options": "level"
             },
             "properties": [
               {
@@ -132,29 +131,25 @@
                 "value": [
                   {
                     "options": {
-                      "200": {
-                        "color": "green",
-                        "index": 0
+                      "debug": {
+                        "color": "text",
+                        "index": 2,
+                        "text": "debug"
                       },
-                      "201": {
-                        "color": "green",
-                        "index": 2
+                      "info": {
+                        "color": "#2ae311",
+                        "index": 0,
+                        "text": "info"
                       },
-                      "400": {
-                        "color": "blue",
-                        "index": 4
+                      "warn": {
+                        "color": "#ed0b25",
+                        "index": 3,
+                        "text": "warn"
                       },
-                      "401": {
-                        "color": "blue",
-                        "index": 5
-                      },
-                      "404": {
-                        "color": "blue",
-                        "index": 3
-                      },
-                      "500": {
+                      "error": {
                         "color": "#ef1630",
-                        "index": 1
+                        "index": 1,
+                        "text": "error"
                       }
                     },
                     "type": "value"
@@ -218,7 +213,7 @@
         ]
       },
       "gridPos": {
-        "h": 15,
+        "h": 27,
         "w": 24,
         "x": 0,
         "y": 0
@@ -229,12 +224,12 @@
         "showHeader": true,
         "sortBy": [
           {
-            "desc": false,
-            "displayName": "requestId"
+            "desc": true,
+            "displayName": "time"
           }
         ]
       },
-      "pluginVersion": "12.2.0-17940193463.patch2",
+      "pluginVersion": "12.4.0-19378664917",
       "targets": [
         {
           "datasource": {
@@ -243,7 +238,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "{source=\"grafana-demo\", environment=~\"${environment}\"}\n|~ \"${data}\"\n| json\n| msg = \"HTTP response sent\"\n| payload_requestId =~ \".*${requestId}.*\"",
+          "expr": "{source=\"grafana-demo\", environment=~\"${environment}\", level=~\"${level}\"}\n|~ \"${data}\"\n| json\n| payload_context = \"EmailService\"\n| msg =~ \".*${message}.*\"\n| payload_requestId =~ \".*${requestId}.*\"",
           "queryType": "range",
           "refId": "A"
         }
@@ -289,6 +284,7 @@
           "options": {
             "conversions": [
               {
+                "dateFormat": "",
                 "destinationType": "time",
                 "targetField": "time"
               }
@@ -323,11 +319,7 @@
         {
           "id": "organize",
           "options": {
-            "excludeByName": {
-              "level": true,
-              "msg": true,
-              "requestId": true
-            },
+            "excludeByName": {},
             "includeByName": {},
             "indexByName": {
               "level": 1,
@@ -340,25 +332,17 @@
           }
         },
         {
-          "id": "extractFields",
+          "id": "convertFieldType",
           "options": {
-            "delimiter": ",",
-            "source": "payload"
-          }
-        },
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "time",
-                "requestId",
-                "method",
-                "endpoint",
-                "statusCode",
-                "requestTime"
-              ]
-            }
+            "conversions": [
+              {
+                "dateFormat": "yyyy-MM-DD HH:mm:ss.SSS",
+                "destinationType": "string",
+                "targetField": "time",
+                "timezone": "Europe/Rome"
+              }
+            ],
+            "fields": {}
           }
         }
       ],
@@ -394,6 +378,50 @@
         ],
         "query": "development,production",
         "type": "custom"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "text": "$__all",
+          "value": "$__all"
+        },
+        "includeAll": true,
+        "name": "level",
+        "options": [
+          {
+            "selected": false,
+            "text": "debug",
+            "value": "debug"
+          },
+          {
+            "selected": false,
+            "text": "info",
+            "value": "info"
+          },
+          {
+            "selected": false,
+            "text": "error",
+            "value": "error"
+          }
+        ],
+        "query": "debug,info,error",
+        "type": "custom"
+      },
+      {
+        "current": {
+          "text": "",
+          "value": ""
+        },
+        "name": "message",
+        "options": [
+          {
+            "selected": true,
+            "text": "",
+            "value": ""
+          }
+        ],
+        "query": "",
+        "type": "textbox"
       },
       {
         "current": {
@@ -435,8 +463,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "HTTP responses",
-  "uid": "lu86fz6",
-  "version": 8,
-  "refresh": "30s"
+  "title": "EmailService logs",
+  "uid": "lu6z74v",
+  "version": 2
 }

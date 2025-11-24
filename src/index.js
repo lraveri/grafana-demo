@@ -258,10 +258,8 @@ async function simulateEmailService() {
   
   const templateName = templates[Math.floor(Math.random() * templates.length)];
   
-  // Generate realistic email addresses
-  const domains = ['gmail.com', 'yahoo.com', 'outlook.com', 'company.com', 'example.com'];
-  const names = ['john.doe', 'jane.smith', 'user', 'customer', 'test.user', 'admin'];
-  const recipientEmail = `${names[Math.floor(Math.random() * names.length)]}${Math.floor(Math.random() * 999)}@${domains[Math.floor(Math.random() * domains.length)]}`;
+  // Generate random userId
+  const userId = Math.floor(Math.random() * 10000) + 1;
   
   // Initial event received log
   logger.info('Event received', {
@@ -269,7 +267,7 @@ async function simulateEmailService() {
     context: 'EmailService',
     eventType: 'send_email',
     templateName,
-    recipientEmail
+    userId
   });
   
   await sleep(randomDelay(10, 50));
@@ -334,7 +332,7 @@ async function simulateEmailService() {
       requestId,
       context: 'EmailService',
       templateName,
-      recipientEmail,
+      userId,
       error: errorMessage,
       processingTime: totalTime,
       retryable: Math.random() < 0.7
@@ -345,7 +343,7 @@ async function simulateEmailService() {
       requestId,
       context: 'EmailService',
       templateName,
-      recipientEmail,
+      userId,
       messageId: generateShortUUID(),
       processingTime: totalTime,
       smtpResponse: '250 Message accepted'

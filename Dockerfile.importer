@@ -1,0 +1,11 @@
+FROM alpine:latest
+
+# Install curl and jq
+RUN apk add --no-cache curl jq bash
+
+# Copy script and dashboards
+COPY import-dashboards.sh /import-dashboards.sh
+RUN chmod +x /import-dashboards.sh
+
+CMD ["/import-dashboards.sh"]
+

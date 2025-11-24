@@ -2,165 +2,140 @@
 
 This repository contains the demo for the talk **"Mastering Observability with Open Source Tools"** by [Luca Raveri](https://lucaraveri.com).
 
-In this demo, we'll explore how to create powerful log visualizations using **Loki** and **Grafana** to gain insights into application behavior, performance, and issues.
+In this demo, we'll explore how to create powerful log visualizations using **Grafana Alloy**, **Loki**, and **Grafana** to gain insights into application behavior, performance, and issues.
 
 ## 🎯 What You'll Learn
 
-- How to set up log streaming to Grafana Cloud Loki
-- Creating comprehensive dashboards on Grafana
-- Setting up alerts for error spikes and fatal errors
+- How to set up a complete observability stack
+- Configure Grafana Alloy to collect logs from files
+- Stream logs to Loki for aggregation and indexing
+- Create comprehensive dashboards in Grafana
+- Query and analyze logs with LogQL
+
+## 🏗️ Architecture
+
+```
+Node.js App → Log File → Grafana Alloy → Loki → Grafana
+```
+
+### Components
+
+1. **Node.js Application**: Generates realistic API traffic and logs to file
+2. **Grafana Alloy**: Reads logs from file and forwards them to Loki
+3. **Loki**: Aggregates and indexes logs
+4. **Grafana**: Visualizes and analyzes logs with dashboards
 
 ## 🚀 Quick Start
 
-### Step 1: Create Grafana Cloud Account
+### Prerequisites
 
-1. Go to [Grafana Cloud](https://grafana.com/auth/sign-in/create-user) and create a free account (no credit card required)
-
-2. Go back to [Grafana Cloud](https://grafana.com/products/cloud) and Navigate to **My Account** → **Manage your Grafana Cloud stack**
-
-3. Click **Details** → Select **Loki** → Grab the following information:
-   - **URL**: Your Loki endpoint (e.g. https://logs-prod-012.grafana.net)
-   - **User**: Your Grafana Cloud user id (e.g. 1059329)
-   - **Name**: Your Loki datasource name (e.g. grafanacloud-lucaraveri993-logs)
-
-4. Create a new token:
-   - In the same page under the section "Sending Logs to Grafana Cloud using Grafana Alloy"
-   - Click on "Generate new token"
-   - Make sure the token has the scope "logs:write"
+- Docker installed
 
 
-### Step 2: Setup Repository
+### Step 1: Clone and Configure
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd grafana-demo
 
-# Install dependencies
-npm install
+# (Optional) Configure alert email
+# Create .env file with your email for receiving alerts
+echo "ALERT_EMAIL=your-email@example.com" > .env
 ```
 
-### Step 3: Configure Environment
-
-Create a `.env` file in the root directory with your Grafana Cloud credentials:
+### Step 2: Start All Services
 
 ```bash
-# Copy the example file
-cp .env.example .env
+# Start all services
+docker-compose up -d
 ```
 
-Edit `.env` with your actual values:
+This command will:
+- Build the Node.js application
+- Start Loki, Alloy, and Grafana
+- Automatically configure Loki as datasource in Grafana
+- Import all dashboards into Grafana
+- Import alert rules and configure email notifications
 
-```env
-# Grafana Cloud Loki Configuration
-LOKI_HOST=https://logs-prod-***.grafana.net
-LOKI_USERNAME=1234567
-LOKI_PASSWORD=your-api-token
+### Step 3: Access Grafana
 
-# Logging Configuration
-LOG_LEVEL=debug
-LOG_SOURCE=grafana-demo
-LOG_ENV=production
+1. Open your browser at: [http://localhost:3000](http://localhost:3000)
+2. Login with:
+   - **Username**: `admin`
+   - **Password**: `admin`
+
+### Step 4: View Logs
+
+In Grafana:
+
+1. Go to **Explore** (compass icon in the sidebar)
+2. Select **Loki** as datasource (already configured)
+3. Try these LogQL queries:
+
+```logql
+# All logs
+{job="grafana-demo"}
+
+# Only errors
+{job="grafana-demo"} | json | level="error"
+
+# HTTP requests
+{job="grafana-demo"} |= "HTTP request"
+
+# Slow queries (>100ms)
+{job="grafana-demo"} | json | queryTime > 100
+
+# Error rate per minute
+sum(rate({job="grafana-demo"} | json | level="error" [1m]))
 ```
 
-### Step 4: Test Connection
+### Step 5: Explore Dashboards
+
+All dashboards are automatically imported into the **"Grafana Demo"** folder:
+
+1. Click on **Dashboards** (squares icon in the sidebar)
+2. Open the **"Grafana Demo"** folder
+3. Available dashboards:
+   - **API Logs** - Real-time log streaming with filtering
+   - **Fatal Errors** - Time series visualization of critical errors
+   - **HTTP Responses** - All HTTP responses with performance metrics
+   - **Query Executed** - Database query monitoring
+   - **Response Codes** - API health and error patterns
+   - **EmailService - Email Sent** - Email service logs (sent/errored)
+   - **EmailService Logs** - All EmailService activity
+
+### Step 6: View Alert Rules
+
+Alert rules are automatically imported and configured:
+
+1. Go to **Alerting** → **Alert rules** (bell icon in the sidebar)
+2. You'll find the rules in the **"Grafana Demo Alerts"** folder:
+   - **FATAL ERROR** - Triggers when application crashes
+   - **500 Error Spike** - Triggers when too many 500 errors occur
+
+Email notifications are automatically configured to: `${ALERT_EMAIL}` (from your `.env` file)
+
+To test alerts, the application generates occasional errors and crashes.
+
+### Stop Services
 
 ```bash
-# Run the test to verify your connection
-npm run test
+# Stop but keep data
+docker-compose stop
+
+# Stop and remove containers (keeps volumes)
+docker-compose down
+
+# Remove everything including data (⚠️ deletes all logs and dashboard updates!)
+docker-compose down -v
 ```
 
-### Step 5: Verify in Grafana
+## 🔍 Service URLs
 
-1. Go to **Grafana Cloud** → **My Account** → **Manage your Grafana Cloud stack** → **Launch**
-
-2. Navigate to **Explore** section
-
-3. Select **Loki** as data source (the datasource to be selected has the name from step 3, e.g. grafanacloud-lucaraveri993-logs)
-
-4. Run this query to see test logs:
-   ```
-   {source="grafana-demo"}
-   ```
-
-5. Verify you can see the test log entries
-
-#### Troubleshooting
-
-If you don't see logs in Grafana, try running the test script with debug mode:
-
-**Windows:**
-```bash
-$env:NODE_DEBUG = "pino-loki"; npm run test
-```
-
-**Mac/Linux:**
-```bash
-NODE_DEBUG=pino-loki npm run test
-```
-
-### Step 6: Import Dashboards
-
-1. Go to **Grafana** → **Dashboards** → **Import**
-
-2. Import the dashboards from the `dashboard/` folder in this repository:
-
-#### 📋 Available Dashboards
-
-- **API Logs** - Real-time log streaming with filtering capabilities
-- **Fatal Errors** - Time series visualization with automatic alerting
-- **HTTP Responses** - Filterable table of all HTTP responses with performance metrics
-- **Query Executed** - Database query monitoring with execution times
-- **Response Codes** - Time series showing API health and error patterns
-
-### Step 7: Run API Simulation
-
-Once everything is configured correctly, start the API simulation:
-
-```bash
-# Start the API traffic simulation
-npm run start
-```
-
-This will generate realistic API traffic with:
-- HTTP requests and responses
-- Database queries with varying performance
-- Error patterns and spikes
-- Background system logs
-
-**💡 Tip**: Leave the script running for about 10 minutes to generate sufficient data for meaningful analysis and visualization. During this time, you should receive alerts via email if they are correctly configured.
-
-### Step 8: Create Alerts (Exercise)
-
-As an exercise, create the following alerting infrastructure and rules:
-
-#### 8.1: Create Evaluation Group
-1. Go to **Grafana** → **Alerting** → **Alert Rules**
-2. Click **"New evaluation group"**
-3. Name it: `My Eval Group`
-4. Set evaluation interval: `1m`
-5. Click **"Save"**
-
-#### 8.2: Create Contact Point
-1. Go to **Grafana** → **Alerting** → **Contact points**
-2. Click **"New contact point"**
-3. Name: `My Contact Point`
-4. Type: **Email**
-5. Add your email address where you want to receive alerts
-6. Click **"Save contact point"**
-
-#### 8.3: Create Alert Rules (Exercise)
-Create the following alert rules manually:
-
-- **Fatal Errors**: Alert when "Application crashed" messages appear
-  - Query: `{source="grafana-demo", environment="production"} | json | msg = "Application crashed"`
-  - Condition: Alert immediately when any logs match this pattern
-
-- **500 Error Spikes**: Alert when 500 errors exceed 30 occurrences in 10 minutes
-  - Query: `{source="grafana-demo"} | json | msg = "HTTP response sent" | payload_statusCode = "500"`
-  - Condition: Alert if more than 30 errors in 10 minutes
-
-**Note**: Assign these rules to your evaluation group and contact point.
+- **Grafana UI**: http://localhost:3000
+- **Loki API**: http://localhost:3100
+- **Alloy UI**: http://localhost:12345
 
 ## 📖 **Talk Slides**
 
@@ -180,3 +155,5 @@ These slides accompany the live demonstration and provide additional context abo
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ---
+
+**🌟 Star this repo if you find it useful!**
