@@ -279,7 +279,7 @@
           },
           "direction": "backward",
           "editorMode": "code",
-          "expr": "sum by (status)(\n  count_over_time(\n    {source=\"grafana-demo\", environment=~\"${environment}\", level=\"info\"}\n    | json\n    | msg = \"HTTP response sent\"\n    | payload_statusCode = \"500\"\n    | label_format status=\"500\"\n  [1m])\n)",
+          "expr": "sum by (status)(\n  count_over_time(\n    {source=\"grafana-demo\", environment=~\"${environment}\", level=\"error\"}\n    | json\n    | msg = \"HTTP request failed\"\n    | payload_statusCode = \"500\"\n    | label_format status=\"500\"\n  [1m])\n)",
           "hide": false,
           "queryType": "range",
           "refId": "C"
